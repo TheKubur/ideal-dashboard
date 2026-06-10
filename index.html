@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IdealData — Ekip Dashboard V16</title>
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="IdealData">
+  <link rel="icon" type="image/png" href="https://i.imgur.com/tBt0YHd.png">
+  <link rel="apple-touch-icon" href="https://i.imgur.com/tBt0YHd.png">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <div id="adminNotificationBanner" style="display:none; background:linear-gradient(90deg, #f59e0b, #e63946); color:white; padding:10px; text-align:center; position:fixed; top:0; left:0; width:100%; z-index:9999; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+    <span id="adminNotificationText"></span>
+    <button onclick="document.getElementById('adminNotificationBanner').style.display='none'" style="margin-left:15px; background:rgba(255,255,255,0.2); border:none; color:white; padding:4px 10px; border-radius:4px; cursor:pointer;">Kapat</button>
+  </div>
+
+
+  
+  <div class="modal-overlay hidden" id="adminNotificationModal">
+    <div class="modal">
+      <div class="modal-title">Yönetici Bildirimi Yayınla</div>
+      <div class="modal-sub">Tüm kullanıcılara üstte görünecek bir bildirim yazın.</div>
+      <textarea class="modal-input" id="adminNotificationInput" rows="4" placeholder="Bildirim mesajı..."></textarea>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="document.getElementById('adminNotificationModal').classList.add('hidden')">İptal</button>
+        <button class="modal-save" onclick="publishAdminNotification()">Yayınla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <img src="https://i.imgur.com/3T5XCGd.png" alt="IdealData"
+        style="height:48px;object-fit:contain;margin-bottom:0.5rem;">
+      <div class="login-sub">Giriş Yap</div>
+      <label class="login-label">E-posta</label>
+      <input class="login-input" type="email" id="loginUser" placeholder="e-posta adresiniz" autocomplete="off">
+      <label class="login-label">Şifre</label>
+      <input class="login-input" type="password" id="loginPass" placeholder="••••••">
+      <button class="login-btn" id="loginBtn">Giriş Yap</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Veriler yükleniyor...</div>
+  </div>
+<div class="modal-overlay hidden" id="activityModal">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle">Aktivite Ekle</div>
+      <div class="modal-sub" id="modalSub">Yaptığın işi kaydet, sayaç otomatik artar</div>
+      <label class="modal-label">Kategori</label>
+      <select class="modal-select" id="modalField" onchange="handleFieldChange()"></select>
+
+      <div id="modalOkrWrap" class="hidden" style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(230,57,70,0.05);border:1px dashed rgba(230,57,70,0.3);border-radius:10px;display:flex;align-items:center;gap:0.5rem;cursor:pointer;" onclick="const cb=document.getElementById('modalIsOkr');cb.checked=!cb.checked;">
+        <input type="checkbox" id="modalIsOkr" style="cursor:pointer;" onclick="event.stopPropagation()">
+        <label for="modalIsOkr" style="color:var(--accent);font-weight:600;font-size:0.85rem;cursor:pointer;margin:0;">Bu kayıt Satış OKR hedeflerine yazılsın</label>
+      </div>
+
+      <div id="modalPriceWrap" class="hidden"
+        style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(16,185,129,0.05);border:1px dashed rgba(16,185,129,0.3);border-radius:10px">
+        <label class="modal-label" style="color:var(--green);font-weight:700">💰 Teklif/Fırsat Tutarı (₺) <span
+            style="font-size:0.7rem;color:var(--ink3);font-weight:400">(Zorunlu, Minimum 1.000 TL)</span></label>
+        <input class="modal-input" type="number" id="modalPrice" placeholder="Örn: 50000"
+          style="margin-bottom:0">
+      </div>
+
+      <label class="modal-label">Kurum / Şirket</label>
+      <select class="modal-select" id="modalCompany" onchange="handleCompanyChange()"></select>
+      <input class="modal-input hidden" type="text" id="modalCompanyCustom" placeholder="Yeni kurum adı yaz...">
+      <label class="modal-label">Durum</label>
+      <select class="modal-select" id="modalStatus">
+        <option value="Tamamlandı">✅ Tamamlandı</option>
+        <option value="Takip">🔄 Takip</option>
+        <option value="Beklemede">⏳ Beklemede</option>
+      </select>
+      <label class="modal-label">Açıklama</label>
+      <input class="modal-input" type="text" id="modalDesc"
+        placeholder="örn: İlk görüşme yapıldı, teklif gönderildi...">
+      <label class="modal-label">Sonraki Adım <span
+          style="font-size:0.7rem;color:var(--ink3)">(opsiyonel)</span></label>
+      <input class="modal-input" type="text" id="modalNextStep"
+        placeholder="örn: Teklif hazırlanacak, toplantı ayarlanacak...">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.75rem">
+        <input type="checkbox" id="modalVIP" style="width:16px;height:16px;cursor:pointer">
+        <label for="modalVIP" style="font-size:0.82rem;font-weight:600;cursor:pointer">⭐ VIP Müşteri olarak
+          işaretle</label>
+      </div>
+      <label class="modal-label">Tarih</label>
+      <div style="display:flex;gap:0.5rem">
+        <input class="modal-input" type="date" id="modalDate" style="flex:2">
+        <input class="modal-input" type="time" id="modalTimeStart" value="09:00" style="flex:1" title="Başlangıç saati">
+        <input class="modal-input" type="time" id="modalTimeEnd" value="09:30" style="flex:1" title="Bitiş saati">
+      </div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal()">İptal</button>
+        <button class="modal-cancel" id="activityDeleteBtn"
+          style="background:#e63946;color:white;display:none;border:none" onclick="deleteActivity()">Sil</button>
+        <button class="modal-save" id="modalSaveBtn" onclick="saveModalAction()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="lostSaleModal">
+    <div class="modal">
+      <div class="modal-title">Kayıp Satışa Not Ekle</div>
+      <div class="modal-sub">Kurumu seçip, satışın neden kaybedildiğine dair notları girin.</div>
+      <label class="modal-label">Kurum / Şirket</label>
+      <select class="modal-select" id="lostSaleCompany"></select>
+      
+      <label class="modal-label">Kayıp Nedeni / Notlar</label>
+      <textarea class="modal-textarea" id="lostSaleNoteText" placeholder="Neden kaybedildi? Neler geliştirilebilir?..." style="min-height:90px"></textarea>
+      
+      <div class="modal-btns" style="margin-top:1.5rem">
+        <button class="modal-cancel" onclick="document.getElementById('lostSaleModal').classList.add('hidden')">İptal</button>
+        <button class="modal-save" id="lostSaleSaveBtn" onclick="saveLostSaleNote()">Notu Kaydet</button>
+      </div>
+    </div>
+  </div>
+<div class="app-layout" id="appLayout" style="display:none">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="https://i.imgur.com/3T5XCGd.png" alt="IdealData" style="height:32px;object-fit:contain;cursor:pointer;" onclick="switchTab('dashboard')" title="Dashboard'a git">
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('crm')">🏢 CRM</button>
+        <button class="tab-btn" id="tabBtnPipeline" onclick="switchTab('pipeline')">📊 Raporlar</button>
+        <button class="tab-btn" onclick="switchTab('companies')">📇 Kurumlar</button>
+        <button class="tab-btn" onclick="switchTab('weekly')">📅 Haftalık Özet</button>
+        <button class="tab-btn" onclick="switchTab('calendar')">🗓 Takvim</button>
+        <button class="tab-btn" id="tabBtnActivities" onclick="switchTab('activity'); renderActivities()"><span style="font-size:1.1rem;margin-right:0.4rem">📋</span> CRM Günlüğü</button>
+        <button class="tab-btn" id="tabBtnAnalytics" style="display:none" onclick="switchTab('analytics')">📈 Verimlilik</button>
+        <button class="tab-btn" id="tabBtnNotes" style="display:none" onclick="switchTab('notes')">🔒 Gizli Notlar</button>
+        <button class="tab-btn" id="tabBtnPersonalTasks" style="display:none" onclick="switchTab('personaltasks'); renderPersonalTasks()">📌 Kişisel Görevler</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div class="header-left">
+          <div class="period-badge">Dönem: <strong id="currentPeriod">Mart 2026</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+          <div class="live-dot">Canlı</div>
+          
+          <button id="btnAdminNotification" onclick="document.getElementById('adminNotificationModal').classList.remove('hidden')" style="display:none;align-items:center;gap:0.4rem;background:#e63946;border:none;border-radius:99px;padding:0.28rem 0.9rem;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;color:white;cursor:pointer">📢 Bildirim</button>
+          <div style="position:relative" id="exportDropWrap">
+
+            <button id="exportDropBtn" onclick="toggleExportMenu(event)"
+              style="display:none;align-items:center;gap:0.4rem;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:99px;padding:0.28rem 0.9rem;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;color:var(--ink);cursor:pointer">📤
+              Dışarı Aktar ▾</button>
+            <div id="exportMenu"
+              style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.18);overflow:hidden;z-index:200;min-width:180px;">
+              <button onclick="exportToPDF();closeExportMenu()"
+                style="width:100%;padding:0.7rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:0.6rem;">📄
+                PDF olarak indir</button>
+              <button onclick="exportToExcel();closeExportMenu()"
+                style="width:100%;padding:0.7rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:0.6rem;border-top:1px solid var(--border);">📥
+                Excel olarak indir</button>
+            </div>
+          </div>
+          <div class="user-badge">
+            <div class="user-avatar-sm" id="headerAvatar" style="background:#e63946;color:white">—</div>
+            <span id="headerName">—</span>
+            <button class="logout-btn" onclick="doLogout()">Çıkış</button>
+          </div>
+          <select class="month-selector" id="monthSel" onchange="changePeriod()">
+            <option value="Ocak">Ocak</option>
+            <option value="Şubat">Şubat</option>
+            <option value="Mart">Mart</option>
+            <option value="Nisan">Nisan</option>
+            <option value="Mayıs">Mayıs</option>
+            <option value="Haziran">Haziran</option>
+            <option value="Temmuz">Temmuz</option>
+            <option value="Ağustos">Ağustos</option>
+            <option value="Eylül">Eylül</option>
+            <option value="Ekim">Ekim</option>
+            <option value="Kasım">Kasım</option>
+            <option value="Aralık">Aralık</option>
+          </select>
+          <select class="month-selector" id="yearSel" onchange="changePeriod()">
+            <!-- Yıllar dinamik olarak main.js içinden eklenecek -->
+          </select>
+        </div>
+      </div>
+
+      <div class="main-container">
+<div class="tab-content active" id="tab-dashboard">
+      <div class="company-strip">
+        <div class="kpi-card" style="--kpi-color:#e63946; cursor:pointer;" onclick="switchTab('calendar')">
+          <div class="kpi-label">Bu Haftanın Toplantıları</div>
+          <div class="kpi-val" id="totalCustomers">0</div>
+          <div class="kpi-sub">Takvim görünümüne gitmek için tıkla</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#457b9d; cursor:pointer;" onclick="switchTab('pipeline'); switchReportTab('kanban')">
+          <div class="kpi-label">Toplam Teklif</div>
+          <div class="kpi-val" id="totalOffers">0</div>
+          <div class="kpi-sub">Satış ekibi toplamı</div>
+          <span class="kpi-pill pill-gold">📄 Gönderilen</span>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#2a9d8f; cursor:pointer;" onclick="switchTab('activity')">
+          <div class="kpi-label">Günlük Ort. CRM Kaydı</div>
+          <div class="kpi-val" id="dailyAvgCRM">0</div>
+          <div class="kpi-sub">Bu ay toplam: <span id="totalCRMCount">0</span></div>
+          <span class="kpi-pill pill-green">📋 CRM aktivitesi</span>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#f4a261; cursor:pointer;" onclick="document.getElementById('okrSection').scrollIntoView({behavior:'smooth'})">
+          <div class="kpi-label">OKR Durum Özeti</div>
+          <div class="kpi-val" id="conversionRate">0/0</div>
+          <div class="kpi-sub">Tüm ekip toplamı</div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-title">Ekip Performansı</div>
+        <div class="section-line"></div>
+      </div>
+      <div id="badgeStrip" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem"></div>
+      <div id="weeklySummaryBox"
+        style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1.25rem;margin-bottom:1.5rem">
+      </div>
+      <div class="team-grid" id="teamGrid"></div>
+
+      <div class="section-head" style="margin-top:2rem;">
+        <div class="section-title">OKR Hedefleri</div>
+        <div class="section-line"></div>
+      </div>
+      <div id="okrSection" class="team-grid" style="margin-bottom:2rem;"></div>
+
+      <div class="section-head">
+        <div class="section-title">Sıralama</div>
+        <div class="section-line"></div>
+      </div>
+      <div class="leaderboard" id="leaderboard"></div>
+
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-title">Aylık Aktivite Trendi</div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Departman Dağılımı</div>
+          <div class="donut-wrap">
+            <canvas id="donutChart" width="120" height="120"></canvas>
+            <div id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+<div class="tab-content" id="tab-activity">
+      <div class="activity-filters" id="activityFilters">
+        <button class="filter-btn active" onclick="filterActivity('all', this)">Tümü</button>
+        <button class="filter-btn" onclick="filterActivity('esma', this)">Esma</button>
+        <button class="filter-btn" onclick="filterActivity('dilan', this)">Dilan</button>
+        <button class="filter-btn" onclick="filterActivity('melek', this)">Melek</button>
+        <button class="filter-btn" onclick="filterActivity('elif', this)">Elif</button>
+      </div>
+      <div class="activity-list" id="activityList"></div>
+    </div>
+<div class="tab-content" id="tab-crm">
+      <div class="crm-toolbar">
+        <div class="crm-filters">
+          <select class="crm-filter-select" id="crmFilterPerson" onchange="renderCRM()">
+            <option value="all">Tüm Kişiler</option>
+            <option value="esma">Esma</option>
+            <option value="dilan">Dilan</option>
+            <option value="melek">Melek</option>
+            <option value="elif">Elif</option>
+          </select>
+          <select class="crm-filter-select" id="crmFilterStatus" onchange="renderCRM()">
+            <option value="all">Tüm Durumlar</option>
+            <option value="Tamamlandı">✅ Tamamlandı</option>
+            <option value="Takip">🔄 Takip</option>
+            <option value="Beklemede">⏳ Beklemede</option>
+          </select>
+          <select class="crm-filter-select" id="crmFilterVIP" onchange="renderCRM()">
+            <option value="all">Tümü</option>
+            <option value="vip">⭐ Sadece VIP</option>
+          </select>
+          <select class="crm-filter-select" id="crmFilterCategory" onchange="renderCRM()">
+            <option value="all">Tüm Kategoriler</option>
+            <option value="musteri">🤝 Yeni Müşteri</option>
+            <option value="temas">📞 Toplam Temas</option>
+            <option value="teklif">📄 Gönderilen Teklif</option>
+            <option value="randevu">📅 Randevu</option>
+            <option value="youtube">▶️ YouTube</option>
+            <option value="twitter">🐦 Twitter/X</option>
+            <option value="linkedin">💼 LinkedIn</option>
+            <option value="instagram">📸 Instagram</option>
+            <option value="haber">📰 Haber</option>
+            <option value="diger">📌 Diğer</option>
+          </select>
+          <input class="crm-search" type="text" id="crmSearch" placeholder="🔍 Kurum veya açıklama ara..."
+            oninput="renderCRM()">
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <input type="date" class="crm-filter-select" id="crmFilterStartDate" onchange="renderCRM()"
+              title="Başlangıç Tarihi">
+            <span style="color:var(--ink3)">-</span>
+            <input type="date" class="crm-filter-select" id="crmFilterEndDate" onchange="renderCRM()"
+              title="Bitiş Tarihi">
+          </div>
+        </div>
+        <div id="crmStats" class="crm-stats"></div>
+      </div>
+      <div class="kanban-board-wrap">
+        <div class="kanban-col" id="kb-beklemede" ondragover="kbAllowDrop(event)" ondrop="kbDrop(event, 'Beklemede')">
+          <div class="kanban-col-header" style="border-top:4px solid #f4a261;color:#f4a261;">
+            <span>⏳ Beklemede</span>
+            <span class="kanban-col-count" style="background:#f4a261;color:white" id="kb-count-beklemede">0</span>
+          </div>
+          <div class="kanban-cards" id="kb-cards-beklemede"></div>
+        </div>
+        <div class="kanban-col" id="kb-takip" ondragover="kbAllowDrop(event)" ondrop="kbDrop(event, 'Takip')">
+          <div class="kanban-col-header" style="border-top:4px solid #457b9d;color:#457b9d;">
+            <span>🔄 Takip</span>
+            <span class="kanban-col-count" style="background:#457b9d;color:white" id="kb-count-takip">0</span>
+          </div>
+          <div class="kanban-cards" id="kb-cards-takip"></div>
+        </div>
+        <div class="kanban-col" id="kb-tamamlandi" ondragover="kbAllowDrop(event)" ondrop="kbDrop(event, 'Tamamlandı')">
+          <div class="kanban-col-header" style="border-top:4px solid #2a9d8f;color:#2a9d8f;">
+            <span>✅ Tamamlandı</span>
+            <span class="kanban-col-count" style="background:#2a9d8f;color:white" id="kb-count-tamamlandi">0</span>
+          </div>
+          <div class="kanban-cards" id="kb-cards-tamamlandi"></div>
+        </div>
+      </div>
+    </div>
+<div class="tab-content" id="tab-pipeline">
+      <div class="crm-toolbar" style="flex-direction:column; align-items:flex-start; gap: 1rem; padding-bottom:0;">
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.08em;color:var(--ink)">📊
+            Raporlar</div>
+          <div id="reportActionBtnWrap" style="display:flex;gap:0.5rem;align-items:center;">
+            <button id="btnNewDeal" onclick="openDealModal()" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 15px rgba(230,57,70,0.3)">+ Yeni Fırsat Ekle</button>
+            <button id="btnNewProject" onclick="openProjectModal()" style="display:none;background:var(--accent);color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 15px rgba(230,57,70,0.3)">+ Yeni Satır Ekle</button>
+            <button id="btnNewWl" onclick="openWlModal()" style="display:none;background:#457b9d;color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 15px rgba(69,123,157,0.3)">+ Yeni Satır Ekle</button>
+            <button id="btnExcelReport" onclick="exportProjectsExcel()" style="display:none;background:#1a7a4a;color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 15px rgba(26,122,74,0.3)">📥 Excel İndir</button>
+          </div>
+        </div>
+        <div class="report-tabs" style="display:flex; gap:0.5rem;">
+          <button class="rep-tab active" id="repTab-kanban" onclick="switchReportTab('kanban')" style="padding:0.5rem 1rem; border:none; background:var(--accent); color:white; border-radius:8px; font-weight:600; cursor:pointer;">Satış Hunisi</button>
+          <button class="rep-tab" id="repTab-new" onclick="switchReportTab('new')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">Yeni Eklenen Projeler</button>
+          <button class="rep-tab" id="repTab-onetime" onclick="switchReportTab('onetime')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">Tek Seferlik Projeler</button>
+          <button class="rep-tab" id="repTab-whitelabel" onclick="switchReportTab('whitelabel')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🏷️ White Label</button>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW 1: KANBAN PİPELİNE -->
+      <div id="report-view-kanban">
+        <div class="kanban-board-wrap" style="grid-template-columns: repeat(5, 1fr) !important; overflow-x: auto; margin-top:1rem;">
+        <div class="kanban-col" style="min-width: 280px;" id="pipe-toplanti" ondragover="pipeAllowDrop(event)"
+          ondrop="pipeDrop(event, 'Toplantı')">
+          <div class="kanban-col-header" style="border-top:4px solid #8b5cf6;color:#8b5cf6;">
+            <span>🤝 Toplantı</span>
+            <span class="kanban-col-count" style="background:#8b5cf6;color:white" id="pipe-count-toplanti">0</span>
+          </div>
+          <div class="kanban-cards" id="pipe-cards-toplanti"></div>
+        </div>
+        <div class="kanban-col" style="min-width: 280px;" id="pipe-teklif" ondragover="pipeAllowDrop(event)"
+          ondrop="pipeDrop(event, 'Teklif Gönderildi')">
+          <div class="kanban-col-header" style="border-top:4px solid #f59e0b;color:#f59e0b;">
+            <span>📤 Teklif Gönderildi</span>
+            <span class="kanban-col-count" style="background:#f59e0b;color:white" id="pipe-count-teklif">0</span>
+          </div>
+          <div class="kanban-cards" id="pipe-cards-teklif"></div>
+        </div>
+        <div class="kanban-col" style="min-width: 280px;" id="pipe-kabul" ondragover="pipeAllowDrop(event)"
+          ondrop="pipeDrop(event, 'Teklif Kabul Edildi')">
+          <div class="kanban-col-header" style="border-top:4px solid #457b9d;color:#457b9d;">
+            <span>✅ Kabul Edildi</span>
+            <span class="kanban-col-count" style="background:#457b9d;color:white" id="pipe-count-kabul">0</span>
+          </div>
+          <div class="kanban-cards" id="pipe-cards-kabul"></div>
+        </div>
+        <div class="kanban-col" style="min-width: 280px;" id="pipe-sozlesme" ondragover="pipeAllowDrop(event)"
+          ondrop="pipeDrop(event, 'Sözleşme İmzalandı')">
+          <div class="kanban-col-header" style="border-top:4px solid #2a9d8f;color:#2a9d8f;">
+            <span>✍️ Sözleşme</span>
+            <span class="kanban-col-count" style="background:#2a9d8f;color:white" id="pipe-count-sozlesme">0</span>
+          </div>
+          <div class="kanban-cards" id="pipe-cards-sozlesme"></div>
+        </div>
+        <div class="kanban-col" style="min-width: 280px;" id="pipe-fatura" ondragover="pipeAllowDrop(event)"
+          ondrop="pipeDrop(event, 'Faturalandırıldı')">
+          <div class="kanban-col-header" style="border-top:4px solid #10b981;color:#10b981;">
+            <span>🧾 Fatura Kesildi</span>
+            <span class="kanban-col-count" style="background:#10b981;color:white" id="pipe-count-fatura">0</span>
+          </div>
+          <div class="kanban-cards" id="pipe-cards-fatura"></div>
+        </div>
+      </div>
+      </div>
+<!-- SUB-VIEW 2: YENİ EKLENEN PROJELER -->
+      <div id="report-view-new" style="display:none; margin-top:1rem;">
+        <div id="proj-table-new"></div>
+      </div>
+
+      <!-- SUB-VIEW 3: TEK SEFERLİK PROJELER -->
+      <div id="report-view-onetime" style="display:none; margin-top:1rem;">
+        <div id="proj-table-onetime"></div>
+      </div>
+
+      <!-- SUB-VIEW 4: WHITE LABEL -->
+      <div id="report-view-whitelabel" style="display:none; margin-top:1rem;">
+        <!-- KPI Strip -->
+        <div id="wl-kpi-strip" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;"></div>
+        <!-- Table -->
+        <div id="wl-table"></div>
+      </div>
+
+    </div>
+<div class="modal-overlay hidden" id="wlModal">
+    <div class="modal">
+      <div class="modal-title" id="wlModalTitle">White Label Kaydı Ekle</div>
+      <div class="modal-sub">Kullanıcı başı geliri tabloya gir</div>
+
+      <label class="modal-label">Ay</label>
+      <select class="modal-select" id="wlMonth">
+        <option value="OCAK">Ocak</option><option value="ŞUBAT">Şubat</option><option value="MART">Mart</option>
+        <option value="NİSAN">Nisan</option><option value="MAYIS">Mayıs</option><option value="HAZİRAN">Haziran</option>
+        <option value="TEMMUZ">Temmuz</option><option value="AĞUSTOS">Ağustos</option><option value="EYLÜL">Eylül</option>
+        <option value="EKİM">Ekim</option><option value="KASIM">Kasım</option><option value="ARALIK">Aralık</option>
+      </select>
+
+      <label class="modal-label">Kurum Adı</label>
+      <select class="modal-select" id="wlCompany" onchange="handleWlCompanyChange()"></select>
+      <input class="modal-input hidden" type="text" id="wlCompanyCustom" placeholder="Yeni kurum adını yazın..." style="margin-top:0.5rem">
+
+      <label class="modal-label">Paket Adı / Açıklama</label>
+      <input class="modal-input" type="text" id="wlPackage" placeholder="Örn: Standart Lisans, Pro Paket...">
+
+      <div style="display:flex;gap:0.75rem;margin-top:0.25rem;">
+        <div style="flex:1">
+          <label class="modal-label">Adet (Kullanıcı Sayısı)</label>
+          <input class="modal-input" type="number" id="wlQty" min="1" placeholder="0" oninput="calcWlTotal()">
+        </div>
+        <div style="flex:1">
+          <label class="modal-label">Birim Fiyat (₺)</label>
+          <input class="modal-input" type="number" id="wlUnitPrice" min="0" placeholder="0" oninput="calcWlTotal()">
+        </div>
+      </div>
+
+      <div style="margin-top:0.75rem;padding:0.75rem 1rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:0.82rem;color:var(--ink3);font-weight:600">Toplam Tutar (Oto)</span>
+        <span id="wlTotalPreview" style="font-size:1.15rem;font-weight:800;color:var(--green)">0 ₺</span>
+      </div>
+
+      <label class="modal-label">Notlar</label>
+      <input class="modal-input" type="text" id="wlNote" placeholder="İstenirse kısa not...">
+
+      <div class="modal-btns" style="margin-top:1.5rem">
+        <button class="modal-cancel" onclick="document.getElementById('wlModal').classList.add('hidden')">İptal</button>
+        <button class="modal-cancel" id="wlDeleteBtn" style="background:#e63946;color:white;border:none;display:none" onclick="deleteWlRecord()">Sil</button>
+        <button class="modal-save" id="wlSaveBtn" onclick="saveWlRecord()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-overlay hidden" id="projectModal">
+      <div class="modal">
+        <div class="modal-title" id="projectModalTitle">Proje Ekle</div>
+        <div class="modal-sub" id="projectModalSub">Tabloya yeni satır ekle</div>
+
+        <label class="modal-label">Tür</label>
+        <select class="modal-select" id="projType">
+          <option value="new">Yeni Eklenen Projeler</option>
+          <option value="onetime">Tek Seferlik Projeler</option>
+        </select>
+
+        <label class="modal-label">Ay</label>
+        <select class="modal-select" id="projMonth">
+          <option value="OCAK">Ocak</option>
+          <option value="ŞUBAT">Şubat</option>
+          <option value="MART">Mart</option>
+          <option value="NİSAN">Nisan</option>
+          <option value="MAYIS">Mayıs</option>
+          <option value="HAZİRAN">Haziran</option>
+          <option value="TEMMUZ">Temmuz</option>
+          <option value="AĞUSTOS">Ağustos</option>
+          <option value="EYLÜL">Eylül</option>
+          <option value="EKİM">Ekim</option>
+          <option value="KASIM">Kasım</option>
+          <option value="ARALIK">Aralık</option>
+        </select>
+
+        <label class="modal-label">Kurum Adı</label>
+        <select class="modal-select" id="projCompany" onchange="handleProjCompanyChange()"></select>
+        <input class="modal-input hidden" type="text" id="projCompanyCustom" placeholder="Yeni kurum adını yazın..." style="margin-top:0.5rem">
+
+        <label class="modal-label">Proje Adı / Açıklama</label>
+        <textarea class="modal-input" id="projName" rows="3" placeholder="Proje adı ve detayı..."></textarea>
+
+        <label class="modal-label">Proje Tutarı (₺)</label>
+        <input class="modal-input" type="number" id="projValue" placeholder="Örn: 30000">
+
+        <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+          <div style="flex:1;">
+            <label class="modal-label">PRO</label>
+            <input class="modal-input" type="text" id="projPro" placeholder="Pro durumu...">
+          </div>
+          <div style="flex:1;">
+            <label class="modal-label">CEP</label>
+            <input class="modal-input" type="text" id="projCep" placeholder="Cep durumu...">
+          </div>
+        </div>
+
+        <label class="modal-label">Açıklama (Opsiyonel)</label>
+        <input class="modal-input" type="text" id="projNote" placeholder="Ek not...">
+
+        <div class="modal-btns">
+          <button class="modal-cancel" onclick="document.getElementById('projectModal').classList.add('hidden')">İptal</button>
+          <button class="modal-cancel" id="projDeleteBtn" style="background:#e63946;color:white;display:none;border:none" onclick="deleteProject()">Sil</button>
+          <button class="modal-save" id="projSaveBtn" onclick="saveProject()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+<div class="modal-overlay hidden" id="companyModal">
+      <div class="modal" style="max-width:600px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+          <div>
+            <div class="modal-title" id="companyModalTitle">Kurum Detayı</div>
+            <div class="modal-sub" id="companyModalSub"></div>
+          </div>
+          <button onclick="document.getElementById('companyModal').classList.add('hidden')"
+            style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem">Kapat</button>
+        </div>
+        <div id="companyModalNoteWrap"
+          style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+          <div
+            style="font-size:0.82rem;font-weight:600;color:var(--ink3);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em">
+            Bana Özel Kurum Notum</div>
+          <textarea id="companyModalNoteText" rows="3"
+            style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:'Outfit',sans-serif;font-size:0.88rem;color:var(--ink);resize:vertical"
+            placeholder="Sadece kendi görebileceğin kişisel kurum notlarını buraya yazabilirsin..."></textarea>
+          <button id="companyModalNoteBtn"
+            style="margin-top:0.75rem;background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:8px;padding:0.6rem 1.2rem;font-size:0.82rem;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;transition:transform 0.2s, background 0.2s;box-shadow:0 4px 15px rgba(0,0,0,0.15)"
+            onclick="saveCompanyNote()">💾 Kaydet</button>
+        </div>
+        <div id="companyModalBody"></div>
+      </div>
+    </div>
+
+    <!-- TOPLANTI NOTU MODAL -->
+    <div class="modal-overlay hidden" id="meetingModal">
+      <div class="modal">
+        <div class="modal-title">📅 Toplantı Notu Ekle</div>
+        <div class="modal-sub">Haftalık toplantı notlarını buraya yaz</div>
+        <label class="modal-label">Tarih</label>
+        <input class="modal-input" type="date" id="meetingDate">
+        <label class="modal-label">Not</label>
+        <textarea class="modal-input" id="meetingNote" rows="5" placeholder="Toplantıda konuşulanlar..."
+          style="resize:vertical"></textarea>
+        <div class="modal-btns">
+          <button class="modal-cancel"
+            onclick="document.getElementById('meetingModal').classList.add('hidden')">İptal</button>
+          <button class="modal-save" onclick="saveMeetingNote()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+<div class="modal-overlay hidden" id="assignModal">
+      <div class="modal" style="max-width:400px">
+        <div class="modal-title" id="assignModalTitle">Temsilci Ata</div>
+        <div class="modal-sub">Bu firma ile kimlerin ilgilenebileceğini seçin</div>
+        <div id="assignModalBody" style="margin-top:1.5rem;display:flex;flex-direction:column;gap:0.5rem"></div>
+        <div class="modal-btns" style="margin-top:1.5rem">
+          <button class="modal-cancel"
+            onclick="document.getElementById('assignModal').classList.add('hidden')">İptal</button>
+          <button class="modal-save" id="assignSaveBtn" onclick="saveAssignments()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- YENİ FIRSAT MODAL (PIPELINE) -->
+    <div class="modal-overlay hidden" id="dealModal">
+      <div class="modal">
+        <div class="modal-title" id="dealModalTitle">Yeni Fırsat Ekle</div>
+        <div class="modal-sub">Satış hunisine yeni bir potansiyel müşteri/iş ekle</div>
+
+        <label class="modal-label">Aşama</label>
+        <select class="modal-select" id="dealStage">
+          <option value="Toplantı">🤝 Müşteri Ziyareti / Online Toplantı</option>
+          <option value="Teklif Gönderildi">📤 Gönderilen Teklif</option>
+          <option value="Teklif Kabul Edildi">✅ Kabul Edilen Teklif</option>
+          <option value="Sözleşme İmzalandı">✍️ İmzalanan Sözleşme</option>
+          <option value="Faturalandırıldı">🧾 Faturalandırılan Proje</option>
+        </select>
+
+        <label class="modal-label">Kurum</label>
+        <select class="modal-select" id="dealCompany" onchange="if(this.value==='__yeni__'){document.getElementById('dealCompanyCustom').classList.remove('hidden');}else{document.getElementById('dealCompanyCustom').classList.add('hidden');}"></select>
+        <input class="modal-input hidden" type="text" id="dealCompanyCustom" placeholder="Yeni Kurum Adı" style="margin-top:0.5rem">
+
+        <label class="modal-label">Tutar (₺)</label>
+        <input class="modal-input" type="number" id="dealValue" placeholder="Örn: 50000">
+
+        <label class="modal-label">Proje / Hizmet Özeti</label>
+        <textarea class="modal-input" id="dealDesc" rows="3" placeholder="Açıklama..."></textarea>
+
+        <div class="modal-btns">
+          <button class="modal-cancel"
+            onclick="document.getElementById('dealModal').classList.add('hidden')">İptal</button>
+          <button class="modal-cancel" id="dealDeleteBtn"
+            style="background:#e63946;color:white;display:none;border:none" onclick="deleteDeal()">Sil</button>
+          <button class="modal-save" id="dealSaveBtn" onclick="saveDeal()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- HAFTALIK ÖZET TAB -->
+    <div class="tab-content" id="tab-weekly">
+      <div
+        style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.1em;color:var(--ink3)">SON 7
+          GÜN</div>
+        <button
+          onclick="document.getElementById('meetingModal').classList.remove('hidden');document.getElementById('meetingDate').value=new Date().toISOString().split('T')[0]"
+          style="background:var(--ink);color:white;border:none;border-radius:10px;padding:0.55rem 1.1rem;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer">📅
+          Toplantı Notu Ekle</button>
+      </div>
+      <div class="weekly-grid" id="weeklyGrid"></div>
+      <div style="margin-top:2rem" id="meetingNotesList"></div>
+    </div>
+<div class="tab-content" id="tab-notes">
+      <div class="crm-toolbar">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.08em;color:var(--ink)">📝 Özel
+          Notlarım</div>
+        <div id="notesFilterWrap" style="display:none;">
+          <select class="crm-filter-select" id="notesFilterPerson" onchange="renderPrivateNotes()">
+            <option value="all">Ekibin Tüm Notları</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap">
+        <div
+          style="flex:1;min-width:300px;background:var(--surface);border-radius:20px;padding:1.5rem;box-shadow:var(--shadow);border:1px solid var(--border);backdrop-filter:blur(24px) saturate(1.8);">
+          <div
+            style="font-size:0.82rem;font-weight:600;color:var(--ink3);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em">
+            Yeni Not Ekle</div>
+          <textarea id="privateNoteInput" rows="5"
+            style="width:100%;height:150px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:1rem;font-family:'Outfit',sans-serif;font-size:0.88rem;color:var(--ink);outline:none;resize:none;margin-bottom:1rem;"
+            placeholder="Bu notları yalnızca sen görebilirsin"></textarea>
+          <button onclick="savePrivateNote(event)"
+            style="width:100%;background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:12px;padding:0.9rem;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:transform 0.2s;box-shadow:0 8px 25px rgba(0,0,0,0.15)">💾
+            Kaydet</button>
+        </div>
+        <div style="flex:2;min-width:300px;display:flex;flex-direction:column;gap:1rem" id="privateNotesList">
+        </div>
+      </div>
+    </div>
+<div class="tab-content" id="tab-companies">
+      <div class="crm-toolbar">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.08em;color:var(--ink)">📇
+          Merkezi Kurum Rehberi</div>
+        <div style="display:flex;gap:0.75rem;align-items:center;flex:1;justify-content:flex-end;flex-wrap:wrap">
+          <select class="crm-search" id="companyDirectoryFilter" onchange="renderCompanies()" style="max-width:180px">
+            <option value="all">Filtre: Tümü</option>
+            <option value="unassigned">📌 Atanmamış Kurumlar</option>
+          </select>
+          <input class="crm-search" type="text" id="companySearch" placeholder="🔍 Kurum veya temsilci ara..."
+            oninput="renderCompanies()" style="max-width:300px;">
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:1.5rem" id="companyDirectoryGrid"></div>
+    </div>
+<div class="tab-content" id="tab-calendar">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+        <button id="outlookLoginBtn" onclick="outlookLogin()"
+          style="display:flex;align-items:center;gap:0.5rem;background:#0078d4;color:white;border:none;border-radius:10px;padding:0.55rem 1.1rem;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg"
+            style="width:16px;height:16px"> Outlook Takvime Bağlan
+        </button>
+        <button id="outlookLogoutBtn" onclick="outlookLogout()"
+          style="display:none;align-items:center;gap:0.5rem;background:rgba(0,120,212,0.1);color:#0078d4;border:1px solid rgba(0,120,212,0.3);border-radius:10px;padding:0.55rem 1.1rem;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer">
+          ✅ Outlook Bağlı · Çıkış
+        </button>
+      </div>
+      <div class="cal-header">
+        <button class="cal-nav-btn" onclick="calPrevMonth()">&#8592;</button>
+        <div class="cal-month-title" id="calMonthTitle"></div>
+        <button class="cal-nav-btn" onclick="calNextMonth()">&#8594;</button>
+      </div>
+      <div class="cal-legend" id="calLegend"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-analytics">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;">
+      <div>
+        <div style="font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,#e63946,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Verimlilik Analizi</div>
+        <div style="font-size:0.82rem;color:var(--ink3);margin-top:0.25rem;">Ekip çaba skoru ve performans özeti &bull; CEO Sunum Raporu</div>
+      </div>
+      <button onclick="exportAnalyticsExcel()" style="display:flex;align-items:center;gap:0.5rem;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.65rem 1.4rem;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(16,185,129,0.35);">📥 Excel İndir</button>
+    </div>
+    <div id="analyticsKpiStrip" style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-bottom:2rem;"></div>
+    <div id="analyticsTable" style="background:var(--surface);border-radius:20px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);"></div>
+  </div>
+
+  <div class="tab-content" id="tab-personaltasks"></div>
+  
+  </div>
+  </main>
+</div>
+
+<div class="modal-overlay hidden" id="calDayModal">
+    <div class="modal" style="max-width:520px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+        <div>
+          <div class="modal-title" id="calDayTitle">Randevular</div>
+          <div class="modal-sub" id="calDaySub"></div>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button id="calDayAddBtn" style="display:none;background:var(--accent2);color:white;border:none;border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem;font-weight:600"></button>
+          <button onclick="document.getElementById('calDayModal').classList.add('hidden')"
+            style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.82rem;color:var(--ink)">Kapat</button>
+        </div>
+      </div>
+      <div id="calDayBody"></div>
+    </div>
+  </div>
+<div class="modal-overlay hidden" id="calNoteModal">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">📝 Randevu Notu</div>
+      <div class="modal-sub" id="calNoteSubTitle"></div>
+      <label class="modal-label">Not</label>
+      <textarea class="modal-input" id="calNoteText" rows="4" placeholder="Randevu notunu buraya yaz..."
+        style="resize:vertical"></textarea>
+      <div class="modal-btns">
+        <button class="modal-cancel"
+          onclick="document.getElementById('calNoteModal').classList.add('hidden')">İptal</button>
+        <button class="modal-save" onclick="saveCalNote()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>IdealData Satış ve Pazarlama Dashboard · Real-time · v17</footer>
+
+  <div id="toastContainer" class="toast-container"></div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- CHATBOT FAB & PANEL -->
+  <div class="chatbot-fab" id="chatbotFab" onclick="toggleChatbot()">
+    <span style="font-size: 1.5rem;">🤖</span>
+  </div>
+
+  <div class="chatbot-panel hidden" id="chatbotPanel">
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <span>🤖</span>
+        <div>
+          <strong>IdealData Asistanı</strong>
+          <div style="font-size: 0.7rem; color: var(--ink3); font-weight: normal;">Yapay Zeka Destekli</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="chatbot-btn" onclick="promptGeminiKey()" title="API Key Ayarları">⚙️</button>
+        <button class="chatbot-btn" onclick="toggleChatbot()">✖</button>
+      </div>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="chat-message bot">
+        <div class="msg-bubble">Merhaba! Ben IdealData Asistanı. Şirket verileri, satışlar veya hedeflerle ilgili bana her şeyi sorabilirsiniz. Size nasıl yardımcı olabilirim?</div>
+      </div>
+    </div>
+    <div class="chatbot-input-area">
+      <input type="text" id="chatInput" placeholder="Bir soru sorun..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+      <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- CORE -->
+  <script src="js/firebase_init.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/globals.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/database.js"></script>
+  
+  <!-- UI COMPONENTS -->
+  <script src="js/ui/dashboard_helpers.js"></script>
+  <script src="js/ui/dashboard.js"></script>
+  <script src="js/ui/activity_modal.js"></script>
+  <script src="js/ui/kanban.js"></script>
+  <script src="js/ui/kanban_drag.js"></script>
+  <script src="js/ui/pipeline.js"></script>
+  <script src="js/ui/whitelabel.js"></script>
+  <script src="js/ui/companies.js"></script>
+  <script src="js/ui/assignments.js"></script>
+  <script src="js/ui/projects.js"></script>
+  <script src="js/ui/calendar.js"></script>
+  <script src="js/ui/outlook.js"></script>
+  <script src="js/ui/meeting_notes.js"></script>
+  <script src="js/ui/private_notes.js"></script>
+  <script src="js/ui/lost_sale.js"></script>
+  <script src="js/ui/weekly.js"></script>
+  <script src="js/ui/badges.js"></script>
+  <script src="js/ui/charts.js"></script>
+  <script src="js/ui/analytics.js"></script>
+  <script src="js/ui/okr.js"></script>
+  <script src="js/ui/glow.js"></script>
+  <script src="js/ui/chatbot.js"></script>
+
+  <!-- INIT -->
+  <script src="js/main.js"></script>
+  <script src="js/ui/personaltasks.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+fetch('app.js')
+  .then(r => r.text())
+  .then(code => {
+    try {
+      new Function(code);
+      document.body.innerHTML += "<h1 style='color:green'>No Syntax Errors!</h1>";
+    } catch(e) {
+      document.body.innerHTML += "<h1 style='color:red'>Syntax Error:</h1><pre>" + e.stack + "</pre>";
+    }
+  })
+  .catch(e => {
+    document.body.innerHTML += "<h1 style='color:red'>Fetch Error:</h1><pre>" + e.stack + "</pre>";
+  });
+</script>
+</body>
+</html>

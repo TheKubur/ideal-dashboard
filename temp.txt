@@ -1,0 +1,1 @@
+﻿  compSel.innerHTML = '<option value="">-- Kurum SeÃ§ --</option>' + allCompanies.map(c => `<option value="${c}">${c}</option>`).join('');

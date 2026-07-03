@@ -73,6 +73,7 @@ function doLogin() {
       listenToLostSaleNotes(currentPeriod);
       listenToNotifications();
       if (typeof listenToPrivateNotes === 'function') listenToPrivateNotes();
+      if (typeof listenToProposals === 'function') listenToProposals();
       setTimeout(() => showTakipPopup(), 1500);
       showToast(`Hoş geldin, ${currentUser.name}!`, 'success');
 

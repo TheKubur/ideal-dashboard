@@ -15,6 +15,7 @@ function changePeriod() {
   listenToWlRecords(currentYear);
   listenToOKR(currentPeriod);
   listenToLostSaleNotes(currentPeriod);
+  if (typeof listenToProposals === 'function') listenToProposals();
   renderTeam();
 }
 

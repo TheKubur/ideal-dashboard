@@ -797,26 +797,17 @@
           <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
             <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📊 Teklif Özeti</div>
             
-            <label class="modal-label">KDV Seçeneği</label>
-            <div style="display:flex; gap:1.25rem; align-items:center; margin-bottom:1.25rem; margin-top:0.25rem;">
-              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.85rem; font-weight:500;">
-                <input type="radio" name="propVatOption" value="excluded" checked onchange="calculateProposalGrandTotal()" style="cursor:pointer; width:15px; height:15px;"> KDV Hariç (%20)
-              </label>
-              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.85rem; font-weight:500;">
-                <input type="radio" name="propVatOption" value="included" onchange="calculateProposalGrandTotal()" style="cursor:pointer; width:15px; height:15px;"> KDV Dahil
-              </label>
-            </div>
-            
             <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
-              <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--ink3);">
-                <span>Ara Toplam:</span>
-                <span id="propSubtotalText" style="font-weight:600; color:var(--ink2); font-size:0.95rem;">0.00 ₺</span>
+              <!-- Hidden KDV inputs to maintain script compatibility -->
+              <div style="display:none;">
+                <input type="radio" name="propVatOption" value="excluded" checked>
+                <input type="radio" name="propVatOption" value="included">
+                <span id="propSubtotalText">0.00 ₺</span>
+                <span id="propVatLabel">KDV</span>
+                <span id="propVatText">0.00 ₺</span>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--ink3);">
-                <span id="propVatLabel">KDV (%20):</span>
-                <span id="propVatText" style="font-weight:600; color:var(--ink2); font-size:0.95rem;">0.00 ₺</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:0.75rem; margin-top:0.25rem;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-weight:700; font-size:1.05rem;">Genel Toplam:</span>
                 <span id="propGrandTotalText" style="font-weight:800; color:var(--green); font-size:1.35rem;">0.00 ₺</span>
               </div>

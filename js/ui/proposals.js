@@ -227,31 +227,15 @@ function calculateProposalGrandTotal() {
     itemsSubtotal += qty * price;
   });
 
-  const vatOption = document.querySelector('input[name="propVatOption"]:checked')?.value || 'excluded';
-  
   let subtotal = itemsSubtotal;
-  let vat = 0;
-  let grandTotal = subtotal;
-
   if (propType === 'package') {
     const pkgPriceInput = document.getElementById('propPackagePrice');
     const packagePrice = parseFloat(pkgPriceInput ? pkgPriceInput.value : 0) || 0;
-    
     subtotal = packagePrice;
-    if (vatOption === 'excluded') {
-      vat = packagePrice * 0.20;
-      grandTotal = packagePrice + vat;
-    } else {
-      vat = 0;
-      grandTotal = packagePrice;
-    }
-  } else {
-    // standard
-    if (vatOption === 'excluded') {
-      vat = subtotal * 0.20;
-      grandTotal = subtotal + vat;
-    }
   }
+
+  let vat = 0;
+  let grandTotal = subtotal;
 
   const subtotalEl   = document.getElementById('propSubtotalText');
   const vatEl        = document.getElementById('propVatText');
@@ -259,8 +243,8 @@ function calculateProposalGrandTotal() {
   const vatLabelEl   = document.getElementById('propVatLabel');
 
   if (subtotalEl)   subtotalEl.textContent   = subtotal.toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺';
-  if (vatEl)        vatEl.textContent         = vatOption === 'excluded' ? vat.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺' : 'Dahil';
-  if (vatLabelEl)   vatLabelEl.textContent    = vatOption === 'excluded' ? 'KDV (%20):' : 'KDV:';
+  if (vatEl)        vatEl.textContent         = '0.00 ₺';
+  if (vatLabelEl)   vatLabelEl.textContent    = 'KDV:';
   if (grandTotalEl) grandTotalEl.textContent  = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺';
 }
 
@@ -303,14 +287,14 @@ function collectProposalFormData() {
   const packageNote = propType === 'package' ? (document.getElementById('propPackageNote')?.value || '') : '';
 
   let calculatedSubtotal = subtotal;
-  let calculatedVat = vatOption === 'excluded' ? calculatedSubtotal * 0.20 : 0;
-  let calculatedGrandTotal = calculatedSubtotal + calculatedVat;
+  let calculatedVat = 0;
+  let calculatedGrandTotal = calculatedSubtotal;
 
   if (propType === 'package') {
     if (packagePrice <= 0) { showToast('Lütfen paket fiyatı girin!', 'warning'); return null; }
     calculatedSubtotal = packagePrice;
-    calculatedVat = vatOption === 'excluded' ? packagePrice * 0.20 : 0;
-    calculatedGrandTotal = packagePrice + calculatedVat;
+    calculatedVat = 0;
+    calculatedGrandTotal = packagePrice;
   }
 
   const preparedById = document.getElementById('propPreparedBy').value;
@@ -553,10 +537,6 @@ function buildAndSavePDF(data, logoDataUrl) {
       </tr>
     `).join('');
 
-    const vatRow = data.vatOption === 'excluded'
-      ? `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV (%20):</td><td style="padding:6px 8px; text-align:right; font-weight:600">${Number(data.vat).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td></tr>`
-      : `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV:</td><td style="padding:6px 8px; text-align:right; font-weight:600; color:#10b981">Dahil</td></tr>`;
-
     tableHtml = `
       <table style="width:100%; border-collapse:collapse; margin-bottom:28px">
         <thead>
@@ -570,15 +550,10 @@ function buildAndSavePDF(data, logoDataUrl) {
         </thead>
         <tbody>
           ${itemsRowsHtml}
-          <tr><td colspan="3" style="border:none"></td>
-            <td style="padding:8px; text-align:right; font-weight:600; color:#475569; border-top:2px solid #cbd5e1">Ara Toplam:</td>
-            <td style="padding:8px; text-align:right; font-weight:600; border-top:2px solid #cbd5e1">${Number(data.subtotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-          </tr>
-          ${vatRow}
           <tr>
             <td colspan="3" style="border:none"></td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px">Genel Toplam:</td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px; border-top:2px solid #cbd5e1">Genel Toplam:</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px; border-top:2px solid #cbd5e1">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
           </tr>
         </tbody>
       </table>

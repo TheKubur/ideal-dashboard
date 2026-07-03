@@ -41,7 +41,7 @@ function doLogin() {
 
       const tabNotesBtn = document.getElementById('tabBtnNotes');
       if (tabNotesBtn) {
-        tabNotesBtn.style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
+        tabNotesBtn.style.display = 'flex';
       }
       
       const tabAnalyticsBtn = document.getElementById('tabBtnAnalytics');

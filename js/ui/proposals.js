@@ -107,6 +107,19 @@ function resetProposalForm() {
   const customInput = document.getElementById('propCompanyCustom');
   if (customInput) { customInput.classList.add('hidden'); customInput.value = ''; }
 
+  // Reset proposal type and package settings fields
+  const typeSel = document.getElementById('propType');
+  if (typeSel) typeSel.value = 'standard';
+  const card = document.getElementById('packageSettingsCard');
+  if (card) card.style.display = 'none';
+
+  const pkgPrice = document.getElementById('propPackagePrice');
+  if (pkgPrice) pkgPrice.value = '';
+  const pkgTitle = document.getElementById('propPackageTitle');
+  if (pkgTitle) pkgTitle.value = 'PAKET FİYATI';
+  const pkgNote = document.getElementById('propPackageNote');
+  if (pkgNote) pkgNote.value = '';
+
   calculateProposalGrandTotal();
 
   // Reset footnote selection to first option
@@ -194,18 +207,51 @@ function calculateRowTotal(input) {
   calculateProposalGrandTotal();
 }
 
+function handlePropTypeChange() {
+  const type = document.getElementById('propType')?.value || 'standard';
+  const card = document.getElementById('packageSettingsCard');
+  if (card) {
+    card.style.display = type === 'package' ? 'block' : 'none';
+  }
+  calculateProposalGrandTotal();
+}
+
 function calculateProposalGrandTotal() {
+  const propType = document.getElementById('propType')?.value || 'standard';
+
   const rows = document.querySelectorAll('.proposal-item-row');
-  let subtotal = 0;
+  let itemsSubtotal = 0;
   rows.forEach(row => {
     const qty   = parseFloat(row.querySelector('.prop-item-qty')?.value)   || 0;
     const price = parseFloat(row.querySelector('.prop-item-price')?.value) || 0;
-    subtotal += qty * price;
+    itemsSubtotal += qty * price;
   });
 
   const vatOption = document.querySelector('input[name="propVatOption"]:checked')?.value || 'excluded';
-  let vat = 0, grandTotal = subtotal;
-  if (vatOption === 'excluded') { vat = subtotal * 0.20; grandTotal = subtotal + vat; }
+  
+  let subtotal = itemsSubtotal;
+  let vat = 0;
+  let grandTotal = subtotal;
+
+  if (propType === 'package') {
+    const pkgPriceInput = document.getElementById('propPackagePrice');
+    const packagePrice = parseFloat(pkgPriceInput ? pkgPriceInput.value : 0) || 0;
+    
+    subtotal = packagePrice;
+    if (vatOption === 'excluded') {
+      vat = packagePrice * 0.20;
+      grandTotal = packagePrice + vat;
+    } else {
+      vat = 0;
+      grandTotal = packagePrice;
+    }
+  } else {
+    // standard
+    if (vatOption === 'excluded') {
+      vat = subtotal * 0.20;
+      grandTotal = subtotal + vat;
+    }
+  }
 
   const subtotalEl   = document.getElementById('propSubtotalText');
   const vatEl        = document.getElementById('propVatText');
@@ -251,8 +297,21 @@ function collectProposalFormData() {
     items.push({ name, desc, qty, price, total });
   }
 
-  const vat = vatOption === 'excluded' ? subtotal * 0.20 : 0;
-  const grandTotal = subtotal + vat;
+  const propType = document.getElementById('propType')?.value || 'standard';
+  const packagePrice = propType === 'package' ? (parseFloat(document.getElementById('propPackagePrice')?.value) || 0) : 0;
+  const packageTitle = propType === 'package' ? (document.getElementById('propPackageTitle')?.value || 'PAKET FİYATI') : '';
+  const packageNote = propType === 'package' ? (document.getElementById('propPackageNote')?.value || '') : '';
+
+  let calculatedSubtotal = subtotal;
+  let calculatedVat = vatOption === 'excluded' ? calculatedSubtotal * 0.20 : 0;
+  let calculatedGrandTotal = calculatedSubtotal + calculatedVat;
+
+  if (propType === 'package') {
+    if (packagePrice <= 0) { showToast('Lütfen paket fiyatı girin!', 'warning'); return null; }
+    calculatedSubtotal = packagePrice;
+    calculatedVat = vatOption === 'excluded' ? packagePrice * 0.20 : 0;
+    calculatedGrandTotal = packagePrice + calculatedVat;
+  }
 
   const preparedById = document.getElementById('propPreparedBy').value;
 
@@ -260,7 +319,17 @@ function collectProposalFormData() {
     company, contactPerson,
     date: propDate,
     validity: propValidity,
-    items, vatOption, subtotal, vat, grandTotal, notes, footnoteType,
+    items, 
+    vatOption, 
+    subtotal: calculatedSubtotal, 
+    vat: calculatedVat, 
+    grandTotal: calculatedGrandTotal, 
+    notes, 
+    footnoteType,
+    proposalType: propType,
+    packagePrice,
+    packageTitle,
+    packageNote,
     memberId:      preparedById,
     memberName:    getMemberName(preparedById),
     memberInitials: getMemberInitials(preparedById),
@@ -350,6 +419,16 @@ function enterEditMode(id) {
   setVal('propValidity',      prop.validity);
   setVal('propNotes',         prop.notes);
 
+  // Set Proposal Type and Package values
+  const typeSel = document.getElementById('propType');
+  if (typeSel) {
+    typeSel.value = prop.proposalType || 'standard';
+    handlePropTypeChange();
+  }
+  setVal('propPackagePrice', prop.packagePrice || '');
+  setVal('propPackageTitle', prop.packageTitle || 'PAKET FİYATI');
+  setVal('propPackageNote', prop.packageNote || '');
+
   // VAT option
   const vatRadios = document.querySelectorAll('input[name="propVatOption"]');
   vatRadios.forEach(r => { r.checked = r.value === prop.vatOption; });
@@ -416,23 +495,107 @@ function buildAndSavePDF(data, logoDataUrl) {
   const formattedDate = formatDate(data.date);
   const teklif_no = `ID-${data.createdAt.substring(2,4)}${data.createdAt.substring(5,7)}${data.createdAt.substring(8,10)}-${data.id ? data.id.substring(0,5).toUpperCase() : 'TEMP'}`;
 
-  const itemsHtml = data.items.map((item, idx) => `
-    <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'}">
-      <td style="padding:10px 8px; font-weight:600; vertical-align:top">${idx+1}. ${item.name}</td>
-      <td style="padding:10px 8px; color:#64748b; vertical-align:top; font-size:12px">${item.desc || '—'}</td>
-      <td style="padding:10px 8px; text-align:center; vertical-align:top">${item.qty}</td>
-      <td style="padding:10px 8px; text-align:right; vertical-align:top">${Number(item.price).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-      <td style="padding:10px 8px; text-align:right; vertical-align:top; font-weight:700">${Number(item.total).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-    </tr>
-  `).join('');
+  // Check if it's package proposal
+  const isPackage = data.proposalType === 'package';
 
-  const vatRow = data.vatOption === 'excluded'
-    ? `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV (%20):</td><td style="padding:6px 8px; text-align:right; font-weight:600">${Number(data.vat).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td></tr>`
-    : `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV:</td><td style="padding:6px 8px; text-align:right; font-weight:600; color:#10b981">Dahil</td></tr>`;
+  let tableHtml = '';
+
+  if (isPackage) {
+    // Flexbox package layout to fix html2canvas rowspan rendering bug
+    const rowsHtml = data.items.map((item, idx) => `
+      <div style="display:flex; border-bottom:${idx===data.items.length-1?'none':'1px solid #cbd5e1'}; background:${idx%2===0?'#ffffff':'#f8fafc'}; padding:12px 10px; align-items:center; min-height:45px; box-sizing:border-box;">
+        <div style="flex:1; font-weight:600; text-align:left; font-size:13px; color:#0f172a; padding-right:10px;">
+          <strong>${item.name}</strong>
+          ${item.desc ? `<br><span style="color:#64748b; font-size:11px; font-weight:normal">${item.desc}</span>` : ''}
+        </div>
+        <div style="width:150px; text-align:right; font-weight:700; color:#0f172a; font-size:13px;">${Number(item.price).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</div>
+      </div>
+    `).join('');
+
+    tableHtml = `
+      <div style="display:flex; border:2px solid #cbd5e1; border-radius:8px; overflow:hidden; margin-bottom:28px; width:100%; box-sizing:border-box; background:#ffffff;">
+        <!-- Left Side: Items & Prices -->
+        <div style="flex:1; display:flex; flex-direction:column;">
+          <!-- Header -->
+          <div style="display:flex; background:#0d1f61; color:#ffffff; font-weight:700; font-size:12px; padding:12px 10px; border-bottom:2px solid #cbd5e1; box-sizing:border-box;">
+            <div style="flex:1; text-align:left;">Açıklama</div>
+            <div style="width:150px; text-align:right;">Birim Fiyat/Aylık</div>
+          </div>
+          <!-- Rows -->
+          <div style="display:flex; flex-direction:column; flex:1; justify-content:space-between;">
+            ${rowsHtml}
+          </div>
+        </div>
+        
+        <!-- Right Side: Package Price Column -->
+        <div style="width:180px; display:flex; flex-direction:column; border-left:2px solid #cbd5e1; background:#f8fafc; box-sizing:border-box;">
+          <!-- Header -->
+          <div style="background:#0d1f61; color:#ffffff; font-weight:700; font-size:12px; padding:12px 10px; text-align:center; border-bottom:2px solid #cbd5e1; box-sizing:border-box;">
+            ${data.packageTitle || 'PAKET FİYATI'}
+          </div>
+          <!-- Price Body -->
+          <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; text-align:center; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700; margin-bottom:6px; width:100%;">${data.packageTitle || 'PAKET FİYATI'}</div>
+            <div style="font-size:18px; color:#f24f00; font-weight:900; white-space:nowrap; width:100%;">${Number(data.packagePrice).toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2})} ₺</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Standard Table layout
+    const itemsRowsHtml = data.items.map((item, idx) => `
+      <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'}">
+        <td style="padding:10px 8px; font-weight:600; vertical-align:top">${idx+1}. ${item.name}</td>
+        <td style="padding:10px 8px; color:#64748b; vertical-align:top; font-size:12px">${item.desc || '—'}</td>
+        <td style="padding:10px 8px; text-align:center; vertical-align:top">${item.qty}</td>
+        <td style="padding:10px 8px; text-align:right; vertical-align:top">${Number(item.price).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+        <td style="padding:10px 8px; text-align:right; vertical-align:top; font-weight:700">${Number(item.total).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+      </tr>
+    `).join('');
+
+    const vatRow = data.vatOption === 'excluded'
+      ? `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV (%20):</td><td style="padding:6px 8px; text-align:right; font-weight:600">${Number(data.vat).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td></tr>`
+      : `<tr><td colspan="3" style="border:none"></td><td style="padding:6px 8px; text-align:right; color:#475569; font-weight:600">KDV:</td><td style="padding:6px 8px; text-align:right; font-weight:600; color:#10b981">Dahil</td></tr>`;
+
+    tableHtml = `
+      <table style="width:100%; border-collapse:collapse; margin-bottom:28px">
+        <thead>
+          <tr style="background:#0d1f61; color:#ffffff">
+            <th style="padding:12px 8px; text-align:left; font-weight:700; font-size:12px">Ürün / Hizmet</th>
+            <th style="padding:12px 8px; text-align:left; font-weight:700; font-size:12px">Açıklama</th>
+            <th style="padding:12px 8px; text-align:center; font-weight:700; font-size:12px; width:55px">Miktar</th>
+            <th style="padding:12px 8px; text-align:right; font-weight:700; font-size:12px; width:110px">Birim Fiyat</th>
+            <th style="padding:12px 8px; text-align:right; font-weight:700; font-size:12px; width:120px">Toplam</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRowsHtml}
+          <tr><td colspan="3" style="border:none"></td>
+            <td style="padding:8px; text-align:right; font-weight:600; color:#475569; border-top:2px solid #cbd5e1">Ara Toplam:</td>
+            <td style="padding:8px; text-align:right; font-weight:600; border-top:2px solid #cbd5e1">${Number(data.subtotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+          </tr>
+          ${vatRow}
+          <tr>
+            <td colspan="3" style="border:none"></td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px">Genel Toplam:</td>
+            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
 
   const logoHtml = logoDataUrl
     ? `<img src="${logoDataUrl}" alt="İdeal Data" style="height:48px; object-fit:contain; display:block">`
     : `<div style="font-size:22px; font-weight:900; color:#0d1f61">İdeal Data</div>`;
+
+  // Package red note display
+  const packageNoteHtml = (isPackage && data.packageNote)
+    ? `<div style="font-size:11px; color:#e63946; font-weight:700; display:flex; align-items:baseline; gap:6px; margin-bottom:8px">
+         <span style="color:#e63946; font-weight:700; flex-shrink:0">*</span>
+         <span style="color:#e63946; font-weight:700">${data.packageNote.toUpperCase()}</span>
+       </div>`
+    : '';
 
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif; color:#0f172a; background:#ffffff; padding:40px; width:750px; font-size:13px; line-height:1.6; box-sizing:border-box;">
@@ -475,30 +638,7 @@ function buildAndSavePDF(data, logoDataUrl) {
       </div>
 
       <!-- ITEMS TABLE -->
-      <table style="width:100%; border-collapse:collapse; margin-bottom:28px">
-        <thead>
-          <tr style="background:#0d1f61; color:#ffffff">
-            <th style="padding:12px 8px; text-align:left; font-weight:700; font-size:12px">Ürün / Hizmet</th>
-            <th style="padding:12px 8px; text-align:left; font-weight:700; font-size:12px">Açıklama</th>
-            <th style="padding:12px 8px; text-align:center; font-weight:700; font-size:12px; width:55px">Miktar</th>
-            <th style="padding:12px 8px; text-align:right; font-weight:700; font-size:12px; width:110px">Birim Fiyat</th>
-            <th style="padding:12px 8px; text-align:right; font-weight:700; font-size:12px; width:120px">Toplam</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-          <tr><td colspan="3" style="border:none"></td>
-            <td style="padding:8px; text-align:right; font-weight:600; color:#475569; border-top:2px solid #cbd5e1">Ara Toplam:</td>
-            <td style="padding:8px; text-align:right; font-weight:600; border-top:2px solid #cbd5e1">${Number(data.subtotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-          </tr>
-          ${vatRow}
-          <tr>
-            <td colspan="3" style="border:none"></td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px">Genel Toplam:</td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-          </tr>
-        </tbody>
-      </table>
+      ${tableHtml}
 
       ${data.notes ? `
         <div style="border-top:1px solid #e2e8f0; padding-top:18px; margin-bottom:24px">
@@ -511,16 +651,17 @@ function buildAndSavePDF(data, logoDataUrl) {
       <div style="margin-top:20px; border-top:2px solid #e2e8f0; padding-top:16px; margin-bottom:20px">
         <div style="font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px">Koşullar ve Açıklamalar</div>
         <div style="display:flex; flex-direction:column; gap:6px">
+          ${packageNoteHtml}
           <div style="font-size:11px; color:#334155; display:flex; align-items:baseline; gap:6px">
             <span style="color:#f24f00; font-weight:700; flex-shrink:0">*</span>
             <span>${data.footnoteType === 'kdvhariç'
-              ? 'Burada yer alan fiyatlar KDV hariç fiyatlarımızdır, KDV oranı %20&apos;dir.'
+              ? 'Burada yer alan fiyat bilgileri KDV hariç verilmiştir. Ürünlerimiz için kullanılan KDV oranı %20&apos;dir.'
               : 'Burada yer alan fiyatlar, Teknopark KDV muafiyeti kapsamında sunulmuştur.'}
             </span>
           </div>
           <div style="font-size:11px; color:#334155; display:flex; align-items:baseline; gap:6px">
             <span style="color:#f24f00; font-weight:700; flex-shrink:0">*</span>
-            <span>Fiyatlarımız yıl sonuna kadar geçerli olup, her yıl TUİK TÜFE oranında artış gösterecektir.</span>
+            <span>Fiyatlarımız yıl sonuna kadar geçerli olup, her yıl TÜİK TÜFE oranında artış gösterecektir.</span>
           </div>
           <div style="font-size:11px; color:#334155; display:flex; align-items:baseline; gap:6px">
             <span style="color:#f24f00; font-weight:700; flex-shrink:0">*</span>

@@ -723,7 +723,6 @@
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
       <div>
         <div style="font-size:1.6rem; font-weight:800; background:linear-gradient(135deg,#e63946,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Fiyat Teklifi Oluşturma</div>
-        <div style="font-size:0.82rem; color:var(--ink3); margin-top:0.25rem;">Müşterileriniz için hızlıca PDF formatında teklif hazırlayın ve indirin.</div>
       </div>
     </div>
 
@@ -755,6 +754,13 @@
               <label class="modal-label">Teklifi Hazırlayan</label>
               <select class="modal-select" id="propPreparedBy"></select>
             </div>
+            <div>
+              <label class="modal-label">Teklif Tipi</label>
+              <select class="modal-select" id="propType" onchange="handlePropTypeChange()">
+                <option value="standard">Standart Detaylı Teklif</option>
+                <option value="package">Paket Fiyatı Teklifi (Birleşik Sütun)</option>
+              </select>
+            </div>
           </div>
 
           <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; margin-top:2rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📦 Ürünler / Hizmetler</div>
@@ -768,6 +774,25 @@
 
         <!-- SAĞ SÜTUN: ÖZET, NOTLAR VE BUTON -->
         <div style="display:flex; flex-direction:column; gap:1.5rem; position:sticky; top:90px;">
+          <!-- Paket Ayarları Kartı (Sadece Paket Teklifinde Gösterilir) -->
+          <div id="packageSettingsCard" style="display:none; background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📦 Paket Fiyatı Ayarları</div>
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+              <div>
+                <label class="modal-label">Paket Fiyatı (₺)</label>
+                <input class="modal-input" type="number" id="propPackagePrice" placeholder="Örn: 150000" oninput="calculateProposalGrandTotal()">
+              </div>
+              <div>
+                <label class="modal-label">Sütun Başlığı</label>
+                <input class="modal-input" type="text" id="propPackageTitle" value="PAKET FİYATI" placeholder="Örn: PAKET FİYATI veya İNDİRİMLİ FİYAT/AYLIK">
+              </div>
+              <div>
+                <label class="modal-label">Kırmızı Renkli İndirim Notu (Alt Bilgi)</label>
+                <input class="modal-input" type="text" id="propPackageNote" placeholder="Örn: PAKET FİYATINA İLK 3 AY %50 İNDİRİM UYGULANACAKTIR.">
+              </div>
+            </div>
+          </div>
+
           <!-- Özet Kartı -->
           <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
             <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📊 Teklif Özeti</div>

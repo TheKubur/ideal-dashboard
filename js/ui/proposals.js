@@ -1,5 +1,7 @@
 let allProposals = [];
 let editingProposalId = null;
+let proposalPage = 1;
+const proposalPageSize = 10;
 
 /* ── TITLE MAP ── */
 function getMemberTitle(memberId) {
@@ -678,18 +680,33 @@ function buildAndSavePDF(data, logoDataUrl) {
 /* ── RENDER LIST ── */
 function renderProposalsList() {
   const container = document.getElementById('proposalsHistoryList');
+  const paginationContainer = document.getElementById('proposalPagination');
   if (!container) return;
 
   if (!allProposals.length) {
     container.innerHTML = '<tr><td colspan="8" class="crm-empty">Henüz teklif kaydı bulunmuyor. 📭</td></tr>';
+    if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
+
+  // Pagination bounds checking
+  const maxPage = Math.ceil(allProposals.length / proposalPageSize);
+  if (proposalPage > maxPage) {
+    proposalPage = maxPage || 1;
+  }
+  if (proposalPage < 1) {
+    proposalPage = 1;
+  }
+
+  const startIndex = (proposalPage - 1) * proposalPageSize;
+  const endIndex = startIndex + proposalPageSize;
+  const paginatedProposals = allProposals.slice(startIndex, endIndex);
 
   const fmtDate = (s) => { if (!s) return ''; const p = s.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
   const isAdmin  = currentUser.role === 'admin';
   const canEdit  = (p) => isAdmin || p.creatorId === currentUser.memberId || p.memberId === currentUser.memberId;
 
-  container.innerHTML = allProposals.map(p => {
+  container.innerHTML = paginatedProposals.map(p => {
     const memberColor = p.memberId === 'admin' ? '#0d1f61' : (TEAM_DEF.find(x => x.id === p.memberId)?.deptColor || '#ccc');
     const teklif_no  = `ID-${p.createdAt.substring(2,4)}${p.createdAt.substring(5,7)}${p.createdAt.substring(8,10)}-${p.id ? p.id.substring(0,5).toUpperCase() : 'TEMP'}`;
     const editBtn = canEdit(p)
@@ -718,6 +735,30 @@ function renderProposalsList() {
       </tr>
     `;
   }).join('');
+
+  // Render pagination controls
+  if (paginationContainer) {
+    const currentToShow = Math.min(endIndex, allProposals.length);
+    paginationContainer.innerHTML = `
+      <span>Toplam <strong>${allProposals.length}</strong> teklif arasından <strong>${startIndex + 1} - ${currentToShow}</strong> arası gösteriliyor.</span>
+      <div style="display:flex; align-items:center; gap:0.75rem">
+        <button class="crm-action-btn" onclick="changeProposalPage('prev')" ${proposalPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>&larr; Önceki</button>
+        <span style="font-weight:600; padding:0 0.25rem;">Sayfa ${proposalPage} / ${maxPage}</span>
+        <button class="crm-action-btn" onclick="changeProposalPage('next')" ${proposalPage === maxPage ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>Sonraki &rarr;</button>
+      </div>
+    `;
+  }
+}
+
+function changeProposalPage(direction) {
+  const maxPage = Math.ceil(allProposals.length / proposalPageSize);
+  if (direction === 'next' && proposalPage < maxPage) {
+    proposalPage++;
+    renderProposalsList();
+  } else if (direction === 'prev' && proposalPage > 1) {
+    proposalPage--;
+    renderProposalsList();
+  }
 }
 
 function reDownloadProposal(id) {

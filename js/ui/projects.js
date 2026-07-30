@@ -20,7 +20,7 @@ function listenToProjects(year) {
 
 function switchReportTab(tab) {
   currentReportType = tab;
-  ['kanban', 'new', 'onetime', 'whitelabel', 'analytics'].forEach(t => {
+  ['kanban', 'new', 'onetime', 'whitelabel', 'analytics', 'newcompanies'].forEach(t => {
     const view = document.getElementById('report-view-' + t);
     const btn = document.getElementById('repTab-' + t);
     if (view) view.style.display = t === tab ? 'block' : 'none';
@@ -46,6 +46,7 @@ function switchReportTab(tab) {
   if (tab === 'new') renderProjects('new');
   else if (tab === 'onetime') renderProjects('onetime');
   else if (tab === 'whitelabel') renderWhiteLabel();
+  else if (tab === 'newcompanies') switchNewCompSubtab(currentNewCompSubtab);
 }
 
 function exportProjectsExcel() {
@@ -241,5 +242,335 @@ function deleteProject() {
   db.collection('projects').doc(editProjectId).delete()
     .then(() => { showToast('Proje silindi.', 'success'); document.getElementById('projectModal').classList.add('hidden'); })
     .catch(e => showToast('Hata: ' + e.message, 'error'));
+}
+
+/* ── YENİ EKLENEN MÜŞTERİLER RAPORU ── */
+let newCompaniesFilter = 'month';
+let allCachedActivitiesForReport = [];
+
+function renderNewCompaniesReport() {
+  const container = document.getElementById('newCompaniesReportList');
+  if (!container) return;
+
+  container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Veriler sorgulanıyor... ⏳</td></tr>';
+
+  db.collection('activities').get()
+    .then(snap => {
+      const activities = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      allCachedActivitiesForReport = activities;
+      displayNewCompanies();
+    })
+    .catch(err => {
+      console.error('Yeni müşteriler rapor hatası:', err);
+      container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e63946; padding:2rem;">Veriler yüklenirken hata oluştu!</td></tr>';
+    });
+}
+
+function filterNewCompanies(period) {
+  newCompaniesFilter = period;
+  
+  ['month', 'year', 'all'].forEach(p => {
+    const btn = document.getElementById('btnCompPeriod-' + p);
+    if (btn) {
+      if (p === period) {
+        btn.style.background = 'var(--accent)';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+      } else {
+        btn.style.background = 'var(--bg)';
+        btn.style.color = 'var(--ink2)';
+        btn.style.border = '1px solid var(--border)';
+      }
+    }
+  });
+  
+  displayNewCompanies();
+}
+
+function displayNewCompanies() {
+  const container = document.getElementById('newCompaniesReportList');
+  if (!container) return;
+
+  if (!allCachedActivitiesForReport.length) {
+    container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Kayıtlı aktivite bulunamadı.</td></tr>';
+    return;
+  }
+
+  const companyFirstContact = {};
+  allCachedActivitiesForReport.forEach(act => {
+    const comp = act.company;
+    if (!comp) return;
+    
+    const actDate = new Date(act.date);
+    if (isNaN(actDate.getTime())) return;
+
+    if (!companyFirstContact[comp] || actDate < new Date(companyFirstContact[comp].date)) {
+      companyFirstContact[comp] = {
+        company: comp,
+        date: act.date,
+        memberName: act.memberName,
+        memberId: act.memberId,
+        desc: act.desc || '—',
+        createdAt: act.createdAt
+      };
+    }
+  });
+
+  let result = Object.values(companyFirstContact);
+  const now = new Date();
+  const currentYearNum = now.getFullYear();
+  const currentMonthNum = now.getMonth();
+
+  if (newCompaniesFilter === 'month') {
+    result = result.filter(c => {
+      const d = new Date(c.date);
+      return d.getFullYear() === currentYearNum && d.getMonth() === currentMonthNum;
+    });
+  } else if (newCompaniesFilter === 'year') {
+    result = result.filter(c => {
+      const d = new Date(c.date);
+      return d.getFullYear() === currentYearNum;
+    });
+  }
+
+  result.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!result.length) {
+    container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Belirtilen dönemde yeni eklenen müşteri bulunamadı. 📭</td></tr>';
+    return;
+  }
+
+  const fmtDate = (s) => { if (!s) return ''; const p = s.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
+
+  container.innerHTML = result.map(c => {
+    const memberColor = c.memberId === 'admin' ? '#0d1f61' : (TEAM_DEF.find(x => x.id === c.memberId)?.deptColor || '#ccc');
+    return `
+      <tr>
+        <td style="font-weight:700; color:var(--ink); font-size:0.88rem;">${c.company}</td>
+        <td style="font-weight:600;">📅 ${fmtDate(c.date)}</td>
+        <td>
+          <div class="crm-person">
+            <span class="crm-person-dot" style="background:${memberColor}"></span>
+            ${c.memberName}
+          </div>
+        </td>
+        <td style="color:var(--ink2); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${c.desc}">${c.desc}</td>
+        <td style="text-align:right;">
+          <button class="crm-action-btn" onclick="showCompanyDetail('${c.company.replace(/'/g, "\\'")}')" style="background:var(--bg); border:1px solid var(--border); color:var(--ink2); padding:0.35rem 0.75rem; border-radius:6px; font-size:0.78rem; cursor:pointer;">🔍 Detaylar</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ── SUBTAB SWITCH MANTIGI ── */
+let currentNewCompSubtab = 'auto';
+
+function switchNewCompSubtab(subtab) {
+  currentNewCompSubtab = subtab;
+  
+  const btnAuto = document.getElementById('btnCompSubtab-auto');
+  const btnManual = document.getElementById('btnCompSubtab-manual');
+  
+  if (btnAuto && btnManual) {
+    if (subtab === 'auto') {
+      btnAuto.classList.add('active');
+      btnAuto.style.background = 'var(--accent)';
+      btnAuto.style.color = 'white';
+      btnManual.classList.remove('active');
+      btnManual.style.background = 'transparent';
+      btnManual.style.color = 'var(--ink2)';
+    } else {
+      btnManual.classList.add('active');
+      btnManual.style.background = 'var(--accent)';
+      btnManual.style.color = 'white';
+      btnAuto.classList.remove('active');
+      btnAuto.style.background = 'transparent';
+      btnAuto.style.color = 'var(--ink2)';
+    }
+  }
+
+  const viewAuto = document.getElementById('newcomp-auto-view');
+  const viewManual = document.getElementById('newcomp-manual-view');
+  if (viewAuto) viewAuto.style.display = subtab === 'auto' ? 'block' : 'none';
+  if (viewManual) viewManual.style.display = subtab === 'manual' ? 'block' : 'none';
+
+  if (subtab === 'manual') {
+    listenToManualCustomers();
+  } else {
+    renderNewCompaniesReport();
+  }
+}
+
+/* ── MANUEL MUSTERI EKLEME MODAL VE KAYDETME ── */
+function openManualCustomerModal() {
+  const modal = document.getElementById('manualCustomerModal');
+  if (!modal) return;
+
+  const dateInput = document.getElementById('manCustDate');
+  if (dateInput) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  const select = document.getElementById('manCustMemberSelect');
+  if (select) {
+    select.innerHTML = '<option value="admin">Hüseyin Kubur</option>';
+    TEAM_DEF.forEach(m => {
+      select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+    });
+    if (currentUser) {
+      select.value = currentUser.memberId || 'admin';
+    }
+  }
+
+  const compInput = document.getElementById('manCustCompany');
+  const noteInput = document.getElementById('manCustNote');
+  if (compInput) compInput.value = '';
+  if (noteInput) noteInput.value = '';
+
+  modal.classList.remove('hidden');
+}
+
+function closeManualCustomerModal() {
+  const modal = document.getElementById('manualCustomerModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function saveManualCustomer() {
+  const companyInput = document.getElementById('manCustCompany');
+  const dateInput = document.getElementById('manCustDate');
+  const memberSelect = document.getElementById('manCustMemberSelect');
+  const noteInput = document.getElementById('manCustNote');
+  const saveBtn = document.getElementById('manCustSaveBtn');
+
+  if (!companyInput || !dateInput || !memberSelect || !noteInput || !saveBtn) return;
+
+  const company = companyInput.value.trim().toUpperCase();
+  const date = dateInput.value;
+  const memberId = memberSelect.value;
+  const desc = noteInput.value.trim();
+
+  if (!company) {
+    showToast('Lütfen müşteri adını girin!', 'warning');
+    return;
+  }
+  if (!date) {
+    showToast('Lütfen tarihi seçin!', 'warning');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Kaydediliyor...';
+
+  const m = TEAM_DEF.find(x => x.id === memberId);
+  const memberName = memberId === 'admin' ? 'Hüseyin Kubur' : (m ? m.name : 'Bilinmiyor');
+
+  db.collection('manual_new_customers').add({
+    company,
+    date,
+    memberId,
+    memberName,
+    desc,
+    createdAt: new Date().toISOString(),
+    addedBy: currentUser ? currentUser.name : 'Sistem'
+  })
+  .then(() => {
+    showToast('Yeni müşteri başarıyla eklendi! 🎉', 'success');
+    closeManualCustomerModal();
+  })
+  .catch(err => {
+    console.error('Manuel müşteri ekleme hatası:', err);
+    showToast('Hata: ' + err.message, 'error');
+  })
+  .finally(() => {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Kaydet';
+  });
+}
+
+/* ── MANUEL FIRESTORE LISTENER ── */
+let manualCustomers = [];
+let isManualListenerActive = false;
+
+function listenToManualCustomers() {
+  if (isManualListenerActive) {
+    renderManualCompaniesList();
+    return;
+  }
+
+  const container = document.getElementById('manualCompaniesReportList');
+  if (container) {
+    container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Yükleniyor... ⏳</td></tr>';
+  }
+
+  const unsub = db.collection('manual_new_customers')
+    .onSnapshot(snap => {
+      manualCustomers = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })).sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      isManualListenerActive = true;
+      renderManualCompaniesList();
+    }, err => {
+      console.error('Manuel müşteri dinleme hatası:', err);
+    });
+
+  globalUnsubscribeFns.push(unsub);
+}
+
+function renderManualCompaniesList() {
+  const container = document.getElementById('manualCompaniesReportList');
+  if (!container) return;
+
+  if (!manualCustomers.length) {
+    container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Manuel olarak eklenmiş müşteri kaydı bulunmuyor. 📭</td></tr>';
+    return;
+  }
+
+  const fmtDate = (s) => { if (!s) return ''; const p = s.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  container.innerHTML = manualCustomers.map(c => {
+    const memberColor = c.memberId === 'admin' ? '#0d1f61' : (TEAM_DEF.find(x => x.id === c.memberId)?.deptColor || '#ccc');
+    const deleteBtn = isAdmin 
+      ? `<button class="crm-action-btn" onclick="deleteManualCustomer('${c.id}')" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.78rem; cursor:pointer; margin-right:4px;">🗑️ Sil</button>`
+      : '';
+      
+    return `
+      <tr>
+        <td style="font-weight:700; color:var(--ink); font-size:0.88rem;">${c.company}</td>
+        <td style="font-weight:600;">📅 ${fmtDate(c.date)}</td>
+        <td>
+          <div class="crm-person">
+            <span class="crm-person-dot" style="background:${memberColor}"></span>
+            ${c.memberName}
+          </div>
+        </td>
+        <td style="color:var(--ink2); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${c.desc || '—'}">${c.desc || '—'}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          ${deleteBtn}
+          <button class="crm-action-btn" onclick="showCompanyDetail('${c.company.replace(/'/g, "\\'")}')" style="background:var(--bg); border:1px solid var(--border); color:var(--ink2); padding:0.35rem 0.75rem; border-radius:6px; font-size:0.78rem; cursor:pointer;">🔍 Detaylar</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function deleteManualCustomer(id) {
+  if (!confirm('Bu manuel müşteri kaydını silmek istediğinizden emin misiniz?')) return;
+  
+  db.collection('manual_new_customers').doc(id).delete()
+    .then(() => {
+      showToast('Kayıt başarıyla silindi.', 'success');
+    })
+    .catch(err => {
+      console.error('Silme hatası:', err);
+      showToast('Hata: ' + err.message, 'error');
+    });
 }
 

@@ -356,11 +356,12 @@
             <button id="btnExcelReport" onclick="exportProjectsExcel()" style="display:none;background:#1a7a4a;color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 15px rgba(26,122,74,0.3)">📥 Excel İndir</button>
           </div>
         </div>
-        <div class="report-tabs" style="display:flex; gap:0.5rem;">
+        <div class="report-tabs" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
           <button class="rep-tab active" id="repTab-kanban" onclick="switchReportTab('kanban')" style="padding:0.5rem 1rem; border:none; background:var(--accent); color:white; border-radius:8px; font-weight:600; cursor:pointer;">Satış Hunisi</button>
           <button class="rep-tab" id="repTab-new" onclick="switchReportTab('new')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">Yeni Eklenen Projeler</button>
           <button class="rep-tab" id="repTab-onetime" onclick="switchReportTab('onetime')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">Tek Seferlik Projeler</button>
           <button class="rep-tab" id="repTab-whitelabel" onclick="switchReportTab('whitelabel')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🏷️ White Label</button>
+          <button class="rep-tab" id="repTab-newcompanies" onclick="switchReportTab('newcompanies')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🆕 Yeni Eklenen Müşteriler</button>
         </div>
       </div>
 
@@ -427,6 +428,72 @@
         <div id="wl-table"></div>
       </div>
 
+      <!-- SUB-VIEW 5: YENİ EKLENEN MÜŞTERİLER -->
+      <div id="report-view-newcompanies" style="display:none; margin-top:1rem;">
+        <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:2rem; box-shadow:var(--shadow);">
+          
+          <!-- Üst Başlık & Alt Menü Seçicisi -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink);">🆕 Yeni Eklenen Müşteriler</div>
+            <div style="display:flex; gap:0.5rem; border:1px solid var(--border); padding:3px; border-radius:10px; background:var(--bg);">
+              <button class="crm-action-btn active" id="btnCompSubtab-auto" onclick="switchNewCompSubtab('auto')" style="padding:0.4rem 1rem; font-size:0.8rem; font-weight:600; border-radius:8px; cursor:pointer; background:var(--accent); color:white; border:none; transition: all 0.2s;">🤖 Sistem (Otomatik)</button>
+              <button class="crm-action-btn" id="btnCompSubtab-manual" onclick="switchNewCompSubtab('manual')" style="padding:0.4rem 1rem; font-size:0.8rem; font-weight:600; border-radius:8px; cursor:pointer; background:transparent; color:var(--ink2); border:none; transition: all 0.2s;">✍️ Manuel Eklenenler</button>
+            </div>
+          </div>
+
+          <!-- OTOMATİK RAPOR ALANI -->
+          <div id="newcomp-auto-view">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+              <div style="display:flex; gap:0.5rem;">
+                <button class="crm-action-btn active" id="btnCompPeriod-month" onclick="filterNewCompanies('month')" style="padding:0.4rem 0.8rem; font-size:0.8rem; font-weight:600; border-radius:6px; cursor:pointer; background:var(--accent); color:white; border:none;">Bu Ay</button>
+                <button class="crm-action-btn" id="btnCompPeriod-year" onclick="filterNewCompanies('year')" style="padding:0.4rem 0.8rem; font-size:0.8rem; font-weight:600; border-radius:6px; cursor:pointer; background:var(--bg); color:var(--ink2); border:1px solid var(--border);">Bu Yıl</button>
+                <button class="crm-action-btn" id="btnCompPeriod-all" onclick="filterNewCompanies('all')" style="padding:0.4rem 0.8rem; font-size:0.8rem; font-weight:600; border-radius:6px; cursor:pointer; background:var(--bg); color:var(--ink2); border:1px solid var(--border);">Tümü</button>
+              </div>
+            </div>
+            <div class="crm-table-wrap">
+              <table class="crm-table">
+                <thead>
+                  <tr>
+                    <th>Müşteri / Kurum Adı</th>
+                    <th>Sisteme Eklenme Tarihi</th>
+                    <th>Ekleyen Temsilci</th>
+                    <th>İlk İletişim Detayı</th>
+                    <th style="text-align:right;">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="newCompaniesReportList">
+                  <tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Yükleniyor...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- MANUEL RAPOR ALANI -->
+          <div id="newcomp-manual-view" style="display:none;">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+              <button class="modal-save" onclick="openManualCustomerModal()" style="padding:0.5rem 1rem; font-size:0.8rem; font-weight:600; border-radius:8px; cursor:pointer;">➕ Yeni Müşteri Ekle</button>
+            </div>
+            <div class="crm-table-wrap">
+              <table class="crm-table">
+                <thead>
+                  <tr>
+                    <th>Müşteri / Kurum Adı</th>
+                    <th>Tarih</th>
+                    <th>Ekleyen Temsilci</th>
+                    <th>Açıklama / Not</th>
+                    <th style="text-align:right;">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="manualCompaniesReportList">
+                  <tr><td colspan="5" style="text-align:center; color:var(--ink3); padding:2rem;">Yükleniyor...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 <div class="modal-overlay hidden" id="wlModal">
     <div class="modal">
@@ -471,6 +538,31 @@
         <button class="modal-cancel" onclick="document.getElementById('wlModal').classList.add('hidden')">İptal</button>
         <button class="modal-cancel" id="wlDeleteBtn" style="background:#e63946;color:white;border:none;display:none" onclick="deleteWlRecord()">Sil</button>
         <button class="modal-save" id="wlSaveBtn" onclick="saveWlRecord()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MANUEL MÜŞTERİ EKLE -->
+  <div class="modal-overlay hidden" id="manualCustomerModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-title">Manuel Müşteri Ekle</div>
+      <div class="modal-sub">Raporlara yansıyacak yeni müşteriyi el ile ekleyin.</div>
+
+      <label class="modal-label">Müşteri / Kurum Adı</label>
+      <input class="modal-input" type="text" id="manCustCompany" placeholder="Örn: ABC HOLDİNG A.Ş.">
+
+      <label class="modal-label">Eklenme Tarihi</label>
+      <input class="modal-input" type="date" id="manCustDate">
+
+      <label class="modal-label">Ekleyen Temsilci</label>
+      <select class="modal-select" id="manCustMemberSelect"></select>
+
+      <label class="modal-label">Açıklama / Not</label>
+      <textarea class="modal-input" id="manCustNote" rows="3" placeholder="İlk görüşme detayları, notlar..." style="resize:vertical; font-family:inherit; padding: 0.5rem;"></textarea>
+
+      <div class="modal-btns" style="margin-top:1.5rem">
+        <button class="modal-cancel" onclick="closeManualCustomerModal()">İptal</button>
+        <button class="modal-save" id="manCustSaveBtn" onclick="saveManualCustomer()">Kaydet</button>
       </div>
     </div>
   </div>
@@ -877,6 +969,9 @@
               <!-- Geçmiş teklifler dinamik eklenecek -->
             </tbody>
           </table>
+        </div>
+        <div id="proposalPagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; flex-wrap:wrap; gap:1rem; font-size:0.85rem; color:var(--ink2);">
+          <!-- Dinamik sayfalama kontrolleri buraya gelecek -->
         </div>
       </div>
     </div>

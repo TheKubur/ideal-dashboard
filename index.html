@@ -230,26 +230,79 @@
       </div>
 
       <div class="section-head">
-        <div class="section-title">Ekip Performansı</div>
+        <div class="section-title">Ekip Performansı & OKR Analiz Merkezi</div>
         <div class="section-line"></div>
       </div>
-      <div id="badgeStrip" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem"></div>
-      <div id="weeklySummaryBox"
-        style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1.25rem;margin-bottom:1.5rem">
-      </div>
-      <div class="team-grid" id="teamGrid"></div>
 
-      <div class="section-head" style="margin-top:2rem;">
-        <div class="section-title">OKR Hedefleri</div>
-        <div class="section-line"></div>
+      <!-- Ekip Seçenek Sekmeleri -->
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button class="rep-tab active" id="btnTeamTab-cards" onclick="switchTeamDashboardTab('cards')" style="padding:0.5rem 1rem; border:none; background:var(--accent); color:white; border-radius:8px; font-weight:600; cursor:pointer;">📋 Ekip Kartları</button>
+        <button class="rep-tab" id="btnTeamTab-matrix" onclick="switchTeamDashboardTab('matrix')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">📊 Departman Karşılaştırma Matrisi</button>
+        <button class="rep-tab" id="btnTeamTab-okr" onclick="switchTeamDashboardTab('okr')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🎯 OKR Yönetim Paneli</button>
       </div>
-      <div id="okrSection" class="team-grid" style="margin-bottom:2rem;"></div>
 
-      <div class="section-head">
-        <div class="section-title">Sıralama</div>
-        <div class="section-line"></div>
+      <!-- KART GÖRÜNÜMÜ ALANI -->
+      <div id="team-cards-area">
+        <div id="badgeStrip" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem"></div>
+        <div id="weeklySummaryBox" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1.25rem;margin-bottom:1.5rem"></div>
+        <div class="team-grid" id="teamGrid" style="cursor:pointer;"></div>
+        
+        <div class="section-head" style="margin-top:2rem;">
+          <div class="section-title">OKR İlerlemeleri</div>
+          <div class="section-line"></div>
+        </div>
+        <div id="okrSection" class="team-grid" style="margin-bottom:2rem;"></div>
       </div>
-      <div class="leaderboard" id="leaderboard"></div>
+
+      <!-- DEPARTMAN & KARŞILAŞTIRMA MATRİSİ -->
+      <div id="team-matrix-area" style="display:none; background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:2rem; box-shadow:var(--shadow); margin-bottom:2rem;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📊 Ekip Faaliyet Karşılaştırma Matrisi</div>
+        <div class="crm-table-wrap">
+          <table class="crm-table">
+            <thead>
+              <tr>
+                <th>Temsilci</th>
+                <th>Departman</th>
+                <th>Arama/Temas</th>
+                <th>Randevu/Toplantı</th>
+                <th>Teklifler</th>
+                <th>Kazanılan / Ciro (₺)</th>
+                <th>Genel Başarı Skoru</th>
+              </tr>
+            </thead>
+            <tbody id="teamMatrixTableBody">
+              <!-- JS ile dinamik çizilecek -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MERKEZİ OKR YÖNETİM PANELİ -->
+      <div id="team-okr-area" style="display:none; background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:2rem; box-shadow:var(--shadow); margin-bottom:2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; flex-wrap:wrap; gap:1rem;">
+          <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink);">🎯 OKR Hedef Matrisi</div>
+          <button class="modal-save" id="btnSaveAllOkrTargets" onclick="saveAllOKRTargets()" style="padding:0.5rem 1.25rem; font-size:0.82rem; font-weight:700; display:none;">💾 Tüm OKR Hedeflerini Kaydet</button>
+        </div>
+        <div class="crm-table-wrap">
+          <table class="crm-table">
+            <thead>
+              <tr>
+                <th>Temsilci</th>
+                <th>Departman</th>
+                <th>Hedef 1 (Fırsat/İçerik)</th>
+                <th>Hedef 2 (Teklif/Sosyal)</th>
+                <th>Hedef 3 (Kazanma %/Haber)</th>
+                <th>Hedef 4 (Kayıp Analiz/LinkedIn)</th>
+              </tr>
+            </thead>
+            <tbody id="teamOkrTableBody">
+              <!-- JS ile dinamik çizilecek -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+<!-- Sıralama bölümü kullanıcı gizliliği gereği kaldırıldı -->
 
       <div class="chart-row">
         <div class="chart-card">
@@ -563,6 +616,53 @@
       <div class="modal-btns" style="margin-top:1.5rem">
         <button class="modal-cancel" onclick="closeManualCustomerModal()">İptal</button>
         <button class="modal-save" id="manCustSaveBtn" onclick="saveManualCustomer()">Kaydet</button>
+      </div>
+    </div>
+  <!-- MODAL: TEMSİLCİ DETAY ANALİZİ -->
+  <div class="modal-overlay hidden" id="memberDetailModal">
+    <div class="modal" style="max-width: 800px; padding: 2rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div id="mDetailPhotoWrap"></div>
+          <div>
+            <h2 id="mDetailName" style="font-size:1.5rem; font-weight:800; color:var(--ink)">...</h2>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
+              <span id="mDetailTitle" style="font-size:0.85rem; color:var(--ink2);">...</span>
+              <span id="mDetailDeptTag" style="font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:99px;">...</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeMemberDetailModal()" style="background:none; border:none; font-size:1.5rem; color:var(--ink3); cursor:pointer;">✕</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items:start; flex-wrap:wrap;">
+        
+        <!-- SOL SÜTUN: SATIŞ DÖNÜŞÜM HUNİSİ (FUNNEL) & AKTİVİTE ÖZETİ -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:1.25rem;">
+            <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.05em; color:var(--ink); margin-bottom:1rem;">📈 Satış Dönüşüm Oranları</h3>
+            
+            <div id="mDetailFunnelContainer" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <!-- JS ile huni oranları çizilecek -->
+            </div>
+          </div>
+
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:1.25rem;">
+            <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.05em; color:var(--ink); margin-bottom:1rem;">📜 Son Faaliyet Akışı</h3>
+            <div id="mDetailFeed" style="max-height: 220px; overflow-y:auto; display:flex; flex-direction:column; gap:0.6rem; padding-right:0.2rem;" class="thin-scroll">
+              <!-- JS ile son 5 faaliyet çizilecek -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SAĞ SÜTUN: OKR ANALİZİ -->
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:1.25rem; height:100%; display:flex; flex-direction:column;">
+          <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.05em; color:var(--ink); margin-bottom:1rem;">🎯 OKR İlerlemesi & Detayları</h3>
+          <div id="mDetailOkrList" style="display:flex; flex-direction:column; gap:0.75rem; flex:1;">
+            <!-- JS ile OKR detayları çizilecek -->
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

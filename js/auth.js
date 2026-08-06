@@ -54,6 +54,15 @@ function doLogin() {
         tabPersonalTasksBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
       }
 
+      const matrixTabBtn = document.getElementById('btnTeamTab-matrix');
+      if (matrixTabBtn) {
+        matrixTabBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+      }
+
+      if (typeof checkMemberNudges === 'function') {
+        setTimeout(checkMemberNudges, 2000);
+      }
+
       const filterSel = document.getElementById('companyDirectoryFilter');
       if (filterSel && filterSel.options.length <= 2) {
         TEAM_DEF.forEach(m => {

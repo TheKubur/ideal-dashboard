@@ -22,8 +22,9 @@ function renderWeeklySummary() {
 }
 
 function renderLeaderboard() {
-  const sorted = [...TEAM_DEF].map(m => ({ ...m, overall: calcOverall(m.id) })).sort((a, b) => b.overall - a.overall);
-  const lb = document.getElementById('leaderboard'); lb.innerHTML = '';
+  const lb = document.getElementById('leaderboard');
+  if (!lb) return;
+  lb.innerHTML = '';
   const rankStyles = ['gold', 'silver', 'bronze'];
   sorted.forEach((m, i) => {
     const rank = rankStyles[i] || 'default';

@@ -33,14 +33,22 @@ function openWlModal(id) {
     if (r) {
       document.getElementById('wlModalTitle').textContent = 'Kaydı Düzenle';
       document.getElementById('wlMonth').value = r.month || 'OCAK';
-      compSel.value = r.company || '';
+      if (compSel && r.company) {
+        const exists = Array.from(compSel.options).some(function (o) { return o.value === r.company; });
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = r.company; opt.textContent = r.company;
+          compSel.insertBefore(opt, compSel.lastElementChild);
+        }
+        compSel.value = r.company;
+      }
       document.getElementById('wlPackage').value = r.package || '';
       document.getElementById('wlQty').value = r.qty || '';
       document.getElementById('wlUnitPrice').value = r.unitPrice || '';
       document.getElementById('wlNote').value = r.note || '';
       calcWlTotal();
     }
-    if (delBtn) delBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+    if (delBtn) delBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'inline-block' : 'none';
   } else {
     document.getElementById('wlModalTitle').textContent = 'White Label Kaydı Ekle';
     const normalize = function (s) { return s.toUpperCase().replace(/\u0130/g, 'I').replace(/\u011e/g, 'G').replace(/\u00dc/g, 'U').replace(/\u015e/g, 'S').replace(/\u00d6/g, 'O').replace(/\u00c7/g, 'C'); };

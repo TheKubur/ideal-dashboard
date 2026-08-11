@@ -183,14 +183,22 @@ function openProjectModal(projId = null) {
       document.getElementById('projectModalTitle').textContent = 'Projeyi Düzenle';
       document.getElementById('projType').value = p.type || 'new';
       document.getElementById('projMonth').value = p.month || 'OCAK';
-      document.getElementById('projCompany').value = p.company || '';
+      if (compSel && p.company) {
+        const exists = [...compSel.options].some(o => o.value === p.company);
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = p.company; opt.textContent = p.company;
+          compSel.insertBefore(opt, compSel.lastElementChild);
+        }
+        compSel.value = p.company;
+      }
       document.getElementById('projName').value = p.name || '';
       document.getElementById('projValue').value = p.value || '';
       document.getElementById('projPro').value = p.pro || '';
       document.getElementById('projCep').value = p.cep || '';
       document.getElementById('projNote').value = p.note || '';
     }
-    if (delBtn) delBtn.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    if (delBtn) delBtn.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role !== 'viewer')) ? 'block' : 'none';
   } else {
     document.getElementById('projectModalTitle').textContent = 'Proje Ekle';
     document.getElementById('projType').value = currentReportType !== 'kanban' ? currentReportType : 'new';

@@ -30,7 +30,15 @@ function openDealModal(dealId = null) {
       document.getElementById('dealValue').value = d.value || '';
       document.getElementById('dealDesc').value = d.desc || '';
       document.getElementById('dealStage').value = d.stage || 'Toplantı';
-      document.getElementById('dealCompany').value = d.company || '';
+      if (compSel && d.company) {
+        const exists = [...compSel.options].some(o => o.value === d.company);
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = d.company; opt.textContent = d.company;
+          compSel.insertBefore(opt, compSel.lastElementChild);
+        }
+        compSel.value = d.company;
+      }
     }
   } else {
     document.getElementById('dealModalTitle').textContent = 'Yeni Fırsat Ekle';

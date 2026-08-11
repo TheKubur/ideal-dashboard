@@ -108,7 +108,7 @@ function renderWhiteLabel() {
   const tableEl = document.getElementById('wl-table');
   if (!kpiEl || !tableEl) return;
 
-  const isAdmin = currentUser && currentUser.role !== 'izleyici';
+  const isAdmin = currentUser && currentUser.role !== 'viewer';
   const list = allWlRecords.slice().sort(function (a, b) {
     const mi = MONTHS_ORDER.indexOf(a.month) - MONTHS_ORDER.indexOf(b.month);
     if (mi !== 0) return mi;

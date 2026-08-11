@@ -37,7 +37,7 @@ function switchReportTab(tab) {
   
   const isProjectTab = tab === 'new' || tab === 'onetime';
   const isWlTab = tab === 'whitelabel';
-  const canAdd = currentUser && currentUser.role !== 'izleyici';
+  const canAdd = currentUser && currentUser.role !== 'viewer';
   
   if (dealBtn) dealBtn.style.display = tab === 'kanban' ? 'inline-block' : 'none';
   if (projBtn) projBtn.style.display = (isProjectTab && canAdd) ? 'inline-block' : 'none';
@@ -110,7 +110,7 @@ function renderProjects(type) {
   }
   const byMonth = {};
   list.forEach(p => { if (!byMonth[p.month]) byMonth[p.month] = []; byMonth[p.month].push(p); });
-  const isAdmin = currentUser && currentUser.role !== 'izleyici';
+  const canEdit = currentUser && currentUser.role !== 'viewer';
   let html = `<div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-top:1rem;">
     <table style="width:100%;border-collapse:collapse;font-family:'Outfit',sans-serif;font-size:0.85rem;">
       <thead><tr style="background:#c8d8c4;color:#1a3a1a;font-weight:700;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;">
@@ -121,7 +121,7 @@ function renderProjects(type) {
         <th style="padding:0.75rem;text-align:center;min-width:55px;">PRO</th>
         <th style="padding:0.75rem;text-align:center;min-width:55px;">CEP</th>
         <th style="padding:0.75rem 1rem;text-align:left;min-width:140px;">AÇIKLAMA</th>
-        ${isAdmin ? '<th style="padding:0.75rem;text-align:center;min-width:55px;">İŞLEM</th>' : ''}
+        ${canEdit ? '<th style="padding:0.75rem;text-align:center;min-width:55px;">İŞLEM</th>' : ''}
       </tr></thead><tbody>`;
   let grandTotal = 0;
   const orderedMonths = MONTHS_ORDER.filter(m => byMonth[m]);
@@ -133,7 +133,7 @@ function renderProjects(type) {
     rows.forEach((p, ri) => {
       const bg = (mi + ri) % 2 === 0 ? 'var(--surface)' : 'var(--bg)';
       const eid = (p.id || '').replace(/'/g, "\\'");
-      html += `<tr style="background:${bg};vertical-align:middle;cursor:${isAdmin ? 'pointer' : 'default'};" ${isAdmin ? `ondblclick="openProjectModal('${eid}')"` : ''}>
+      html += `<tr style="background:${bg};vertical-align:middle;cursor:${canEdit ? 'pointer' : 'default'};" ${canEdit ? `ondblclick="openProjectModal('${eid}')"` : ''}>
         ${ri === 0 ? `<td rowspan="${rows.length}" style="padding:0.65rem 1rem;font-weight:800;font-size:0.92rem;color:var(--ink);border-right:2px solid var(--border);text-align:center;vertical-align:middle;background:var(--bg);">${month}</td>` : ''}
         <td style="padding:0.65rem 1rem;font-weight:600;color:var(--ink);">${p.company || '—'}</td>
         <td style="padding:0.65rem 1rem;color:var(--ink2);line-height:1.5;">${p.name || '—'}</td>
@@ -141,19 +141,19 @@ function renderProjects(type) {
         <td style="padding:0.65rem;text-align:center;color:var(--ink3);">${p.pro || ''}</td>
         <td style="padding:0.65rem;text-align:center;color:var(--ink3);">${p.cep || ''}</td>
         <td style="padding:0.65rem 1rem;color:var(--ink3);font-size:0.8rem;">${p.note || ''}</td>
-        ${isAdmin ? `<td style="padding:0.5rem;text-align:center;"><button onclick="openProjectModal('${eid}')" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.5rem;color:var(--ink3);">✏️</button></td>` : ''}
+        ${canEdit ? `<td style="padding:0.5rem;text-align:center;"><button onclick="openProjectModal('${eid}')" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.5rem;color:var(--ink3);">✏️</button></td>` : ''}
       </tr>`;
     });
     html += `<tr style="background:#e8ede6;">
       <td colspan="3" style="padding:0.5rem 1rem;text-align:right;font-size:0.78rem;color:var(--ink3);font-style:italic;">${month} Toplamı:</td>
       <td style="padding:0.5rem 1rem;text-align:right;font-weight:800;color:#1a472a;">${monthTotal.toLocaleString('tr-TR')} ₺</td>
-      <td colspan="${isAdmin ? '4' : '3'}"></td>
+      <td colspan="${canEdit ? '4' : '3'}"></td>
     </tr>`;
   });
   html += `</tbody><tfoot><tr style="background:#a0c09a;font-weight:800;">
     <td colspan="3" style="padding:0.75rem 1rem;font-size:0.9rem;color:#0a2a0a;text-align:right;">GENEL TOPLAM</td>
     <td style="padding:0.75rem 1rem;font-size:1rem;color:#0a2a0a;text-align:right;">${grandTotal.toLocaleString('tr-TR')} ₺</td>
-    <td colspan="${isAdmin ? '4' : '3'}"></td>
+    <td colspan="${canEdit ? '4' : '3'}"></td>
   </tr></tfoot></table></div>`;
   container.innerHTML = html;
 }

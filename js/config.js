@@ -115,7 +115,7 @@ const TEAM_DEF = [
     ]
   },
   {
-    id: 'melek', name: 'Melek Şiran', dept: 'Satış', title: 'Satış Uzmanı Yardımcısı', deptColor: '#f59e0b', avatarBg: '#fef3c7', initials: 'MŞ', photo: 'https://i.imgur.com/bPLoW39.jpg',
+    id: 'melek', name: 'Melek Şiran', dept: 'Satış', title: 'Satış ve Pazarlama Uzmanı', deptColor: '#f59e0b', avatarBg: '#fef3c7', initials: 'MŞ', photo: 'https://i.imgur.com/bPLoW39.jpg',
     fields: [
       { key: 'musteri', label: 'Yeni Müşteri', emoji: '🤝', hasTarget: true },
       { key: 'temas', label: 'Toplam Temas', emoji: '📞', hasTarget: true },

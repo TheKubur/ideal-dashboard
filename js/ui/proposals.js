@@ -7,7 +7,8 @@ const proposalPageSize = 10;
 function getMemberTitle(memberId) {
   if (memberId === 'admin') return 'Head of Marketing & Growth';
   if (memberId === 'esma')  return 'Kıdemli Satış Uzmanı';
-  if (memberId === 'dilan' || memberId === 'melek') return 'Satış Uzman Yardımcısı';
+  if (memberId === 'melek') return 'Satış ve Pazarlama Uzmanı';
+  if (memberId === 'dilan') return 'Satış Uzman Yardımcısı';
   const m = TEAM_DEF.find(x => x.id === memberId);
   return m?.title || 'Satış Temsilcisi';
 }

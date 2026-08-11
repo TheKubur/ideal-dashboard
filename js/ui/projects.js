@@ -103,7 +103,7 @@ function renderProjects(type) {
   const containerId = type === 'new' ? 'proj-table-new' : 'proj-table-onetime';
   const container = document.getElementById(containerId);
   if (!container) return;
-  const list = allProjects.filter(p => p.type === type);
+  const list = (allProjects || []).filter(p => p.type === type);
   if (!list.length) {
     container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--ink3);font-size:0.9rem;">Henüz kayıt yok. + Yeni Satır Ekle butonuna tıkla.</div>';
     return;
@@ -132,8 +132,8 @@ function renderProjects(type) {
     grandTotal += monthTotal;
     rows.forEach((p, ri) => {
       const bg = (mi + ri) % 2 === 0 ? 'var(--surface)' : 'var(--bg)';
-      const eid = (p.id || '').replace(/'/g, "\\'");
-      html += `<tr style="background:${bg};vertical-align:middle;cursor:${canEdit ? 'pointer' : 'default'};" ${canEdit ? `ondblclick="openProjectModal('${eid}')"` : ''}>
+      const pid = p.id || '';
+      html += `<tr style="background:${bg};vertical-align:middle;cursor:${canEdit ? 'pointer' : 'default'};" ${canEdit ? `data-proj-id="${pid}" ondblclick="openProjectModal(this.getAttribute('data-proj-id'))"` : ''}>
         ${ri === 0 ? `<td rowspan="${rows.length}" style="padding:0.65rem 1rem;font-weight:800;font-size:0.92rem;color:var(--ink);border-right:2px solid var(--border);text-align:center;vertical-align:middle;background:var(--bg);">${month}</td>` : ''}
         <td style="padding:0.65rem 1rem;font-weight:600;color:var(--ink);">${p.company || '—'}</td>
         <td style="padding:0.65rem 1rem;color:var(--ink2);line-height:1.5;">${p.name || '—'}</td>
@@ -141,7 +141,7 @@ function renderProjects(type) {
         <td style="padding:0.65rem;text-align:center;color:var(--ink3);">${p.pro || ''}</td>
         <td style="padding:0.65rem;text-align:center;color:var(--ink3);">${p.cep || ''}</td>
         <td style="padding:0.65rem 1rem;color:var(--ink3);font-size:0.8rem;">${p.note || ''}</td>
-        ${canEdit ? `<td style="padding:0.5rem;text-align:center;"><button onclick="openProjectModal('${eid}')" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.5rem;color:var(--ink3);">✏️</button></td>` : ''}
+        ${canEdit ? `<td style="padding:0.5rem;text-align:center;"><button data-proj-id="${pid}" onclick="event.stopPropagation(); openProjectModal(this.getAttribute('data-proj-id'))" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.5rem;color:var(--ink3);">✏️</button></td>` : ''}
       </tr>`;
     });
     html += `<tr style="background:#e8ede6;">
@@ -161,28 +161,43 @@ function renderProjects(type) {
 function handleProjCompanyChange() {
   const sel = document.getElementById('projCompany');
   const ci = document.getElementById('projCompanyCustom');
-  if (!ci) return;
+  if (!ci || !sel) return;
   if (sel.value === '__yeni__') { ci.classList.remove('hidden'); ci.focus(); }
   else { ci.classList.add('hidden'); ci.value = ''; }
 }
 
 function openProjectModal(projId = null) {
   editProjectId = projId;
+  const modal = document.getElementById('projectModal');
+  if (!modal) { console.error('projectModal bulunamadı!'); return; }
+
   const compSel = document.getElementById('projCompany');
-  const actCompanies = Array.from(new Set(allActivities.map(a => a.company).filter(c => c)));
-  const allComp = Array.from(new Set(COMPANIES.concat(actCompanies))).sort((a, b) => a.localeCompare(b, 'tr'));
-  compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
-    allComp.map(c => `<option value="${c}">${c}</option>`).join('') +
-    '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
+  const actCompanies = Array.from(new Set((allActivities || []).map(a => a.company).filter(c => c)));
+  const allComp = Array.from(new Set((COMPANIES || []).concat(actCompanies))).sort((a, b) => a.localeCompare(b, 'tr'));
+  
+  if (compSel) {
+    compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
+      allComp.map(c => `<option value="${c}">${c}</option>`).join('') +
+      '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
+  }
+
   const ci = document.getElementById('projCompanyCustom');
   if (ci) { ci.classList.add('hidden'); ci.value = ''; }
+  
   const delBtn = document.getElementById('projDeleteBtn');
+  
   if (projId) {
-    const p = allProjects.find(x => x.id === projId);
+    const p = (allProjects || []).find(x => x.id === projId);
     if (p) {
-      document.getElementById('projectModalTitle').textContent = 'Projeyi Düzenle';
-      document.getElementById('projType').value = p.type || 'new';
-      document.getElementById('projMonth').value = p.month || 'OCAK';
+      const titleEl = document.getElementById('projectModalTitle');
+      if (titleEl) titleEl.textContent = 'Projeyi Düzenle';
+      
+      const typeEl = document.getElementById('projType');
+      if (typeEl) typeEl.value = p.type || 'new';
+      
+      const monthEl = document.getElementById('projMonth');
+      if (monthEl) monthEl.value = p.month || 'OCAK';
+      
       if (compSel && p.company) {
         const exists = [...compSel.options].some(o => o.value === p.company);
         if (!exists) {
@@ -192,29 +207,44 @@ function openProjectModal(projId = null) {
         }
         compSel.value = p.company;
       }
-      document.getElementById('projName').value = p.name || '';
-      document.getElementById('projValue').value = p.value || '';
-      document.getElementById('projPro').value = p.pro || '';
-      document.getElementById('projCep').value = p.cep || '';
-      document.getElementById('projNote').value = p.note || '';
+      
+      const nameEl = document.getElementById('projName');
+      if (nameEl) nameEl.value = p.name || '';
+      
+      const valEl = document.getElementById('projValue');
+      if (valEl) valEl.value = p.value || '';
+      
+      const proEl = document.getElementById('projPro');
+      if (proEl) proEl.value = p.pro || '';
+      
+      const cepEl = document.getElementById('projCep');
+      if (cepEl) cepEl.value = p.cep || '';
+      
+      const noteEl = document.getElementById('projNote');
+      if (noteEl) noteEl.value = p.note || '';
     }
-    if (delBtn) delBtn.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role !== 'viewer')) ? 'block' : 'none';
+    if (delBtn) delBtn.style.display = (currentUser && currentUser.role !== 'viewer') ? 'block' : 'none';
   } else {
-    document.getElementById('projectModalTitle').textContent = 'Proje Ekle';
-    document.getElementById('projType').value = currentReportType !== 'kanban' ? currentReportType : 'new';
-    document.getElementById('projCompany').value = '';
-    document.getElementById('projName').value = '';
-    document.getElementById('projValue').value = '';
-    document.getElementById('projPro').value = '';
-    document.getElementById('projCep').value = '';
-    document.getElementById('projNote').value = '';
+    const titleEl = document.getElementById('projectModalTitle');
+    if (titleEl) titleEl.textContent = 'Proje Ekle';
+    
+    const typeEl = document.getElementById('projType');
+    if (typeEl) typeEl.value = currentReportType !== 'kanban' ? currentReportType : 'new';
+    
+    if (compSel) compSel.value = '';
+    ['projName', 'projValue', 'projPro', 'projCep', 'projNote'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
     if (delBtn) delBtn.style.display = 'none';
     const normalize = s => s.toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
     const pm = normalize((currentPeriod || '').split(' ')[0]);
     const matched = MONTHS_ORDER.find(m => normalize(m) === pm);
-    document.getElementById('projMonth').value = matched || 'OCAK';
+    const monthEl = document.getElementById('projMonth');
+    if (monthEl) monthEl.value = matched || 'OCAK';
   }
-  document.getElementById('projectModal').classList.remove('hidden');
+  
+  modal.classList.remove('hidden');
 }
 
 function saveProject() {

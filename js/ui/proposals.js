@@ -29,11 +29,7 @@ function getMemberInitials(memberId) {
 function listenToProposals() {
   const unsub = db.collection('proposals').orderBy('createdAt', 'desc').onSnapshot(snap => {
     const rawList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (currentUser.role === 'admin' || currentUser.role === 'viewer') {
-      allProposals = rawList;
-    } else {
-      allProposals = rawList.filter(p => p.memberId === currentUser.memberId || p.creatorId === currentUser.memberId);
-    }
+    allProposals = rawList;
     if (document.getElementById('tab-teklif') && document.getElementById('tab-teklif').classList.contains('active')) {
       renderProposalsList();
     }
@@ -705,8 +701,8 @@ function renderProposalsList() {
   const paginatedProposals = allProposals.slice(startIndex, endIndex);
 
   const fmtDate = (s) => { if (!s) return ''; const p = s.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
-  const isAdmin  = currentUser.role === 'admin';
-  const canEdit  = (p) => isAdmin || p.creatorId === currentUser.memberId || p.memberId === currentUser.memberId;
+  const isAdmin  = !currentUser || currentUser.role === 'admin';
+  const canEdit  = (p) => !currentUser || currentUser.role !== 'viewer';
 
   container.innerHTML = paginatedProposals.map(p => {
     const memberColor = p.memberId === 'admin' ? '#0d1f61' : (TEAM_DEF.find(x => x.id === p.memberId)?.deptColor || '#ccc');

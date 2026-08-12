@@ -174,6 +174,7 @@ function openProjectModal(projId = null) {
 
   modal.classList.remove('hidden');
   modal.style.display = 'flex';
+  modal.style.zIndex = '99999';
 
   try {
     const compSel = document.getElementById('projCompany');
@@ -252,6 +253,23 @@ function openProjectModal(projId = null) {
     console.error('openProjectModal hatasi:', err);
   }
 }
+
+window.openProjectModal = openProjectModal;
+
+document.addEventListener('click', function(e) {
+  const projBtn = e.target.closest('[data-proj-id]');
+  if (projBtn) {
+    e.stopPropagation();
+    const pid = projBtn.getAttribute('data-proj-id');
+    openProjectModal(pid);
+    return;
+  }
+  const newBtn = e.target.closest('#btnNewProject');
+  if (newBtn) {
+    e.stopPropagation();
+    openProjectModal(null);
+  }
+});
 
 function saveProject() {
   const type = document.getElementById('projType').value;

@@ -13,6 +13,8 @@ function openDealModal(dealId = null) {
   const modal = document.getElementById('dealModal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+  modal.style.zIndex = '99999';
 
   try {
     const compSel = document.getElementById('dealCompany');
@@ -61,6 +63,23 @@ function openDealModal(dealId = null) {
     console.error('openDealModal hatasi:', err);
   }
 }
+
+window.openDealModal = openDealModal;
+
+document.addEventListener('click', function(e) {
+  const dealBtn = e.target.closest('[data-deal-id]');
+  if (dealBtn) {
+    e.stopPropagation();
+    const did = dealBtn.getAttribute('data-deal-id');
+    openDealModal(did);
+    return;
+  }
+  const newDealBtn = e.target.closest('#btnNewDeal');
+  if (newDealBtn) {
+    e.stopPropagation();
+    openDealModal(null);
+  }
+});
 
 function deleteDeal() {
   if (!editDealId) return;

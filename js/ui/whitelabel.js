@@ -21,6 +21,8 @@ function openWlModal(id) {
   const modal = document.getElementById('wlModal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+  modal.style.zIndex = '99999';
 
   try {
     const compSel = document.getElementById('wlCompany');
@@ -74,6 +76,23 @@ function openWlModal(id) {
     console.error('openWlModal hatasi:', err);
   }
 }
+
+window.openWlModal = openWlModal;
+
+document.addEventListener('click', function(e) {
+  const wlBtn = e.target.closest('[data-wl-id]');
+  if (wlBtn) {
+    e.stopPropagation();
+    const wid = wlBtn.getAttribute('data-wl-id');
+    openWlModal(wid);
+    return;
+  }
+  const newWlBtn = e.target.closest('#btnNewWl');
+  if (newWlBtn) {
+    e.stopPropagation();
+    openWlModal(null);
+  }
+});
 
 function saveWlRecord() {
   const month = document.getElementById('wlMonth').value;

@@ -8,47 +8,58 @@ function listenToDeals(period) {
 }
 
 function openDealModal(dealId = null) {
+  if (typeof dealId !== 'string') dealId = null;
   editDealId = dealId;
-  const compSel = document.getElementById('dealCompany');
-  const actCompanies = [...new Set(allActivities.map(a => a.company).filter(c => c))];
-  const allCompanies = [...new Set([...COMPANIES, ...actCompanies])].sort();
-  
-  compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' + 
-                      allCompanies.map(c => `<option value="${c}">${c}</option>`).join('') +
-                      '<option value="__yeni__" style="font-weight:bold;color:var(--accent)">+ Yeni Kurum Ekle...</option>';
-                      
-  const customInput = document.getElementById('dealCompanyCustom');
-  if (customInput) {
-    customInput.classList.add('hidden');
-    customInput.value = '';
-  }
+  const modal = document.getElementById('dealModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
 
-  if (dealId) {
-    const d = allDeals.find(x => x.id === dealId);
-    if (d) {
-      document.getElementById('dealModalTitle').textContent = 'Fırsatı Düzenle';
-      document.getElementById('dealValue').value = d.value || '';
-      document.getElementById('dealDesc').value = d.desc || '';
-      document.getElementById('dealStage').value = d.stage || 'Toplantı';
-      if (compSel && d.company) {
-        const exists = [...compSel.options].some(o => o.value === d.company);
-        if (!exists) {
-          const opt = document.createElement('option');
-          opt.value = d.company; opt.textContent = d.company;
-          compSel.insertBefore(opt, compSel.lastElementChild);
-        }
-        compSel.value = d.company;
-      }
+  try {
+    const compSel = document.getElementById('dealCompany');
+    const actCompanies = [...new Set((allActivities || []).map(a => a.company).filter(c => c))];
+    const allCompanies = [...new Set([...(COMPANIES || []), ...actCompanies])].sort();
+    
+    if (compSel) {
+      compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' + 
+                          allCompanies.map(c => `<option value="${c}">${c}</option>`).join('') +
+                          '<option value="__yeni__" style="font-weight:bold;color:var(--accent)">+ Yeni Kurum Ekle...</option>';
     }
-  } else {
-    document.getElementById('dealModalTitle').textContent = 'Yeni Fırsat Ekle';
-    document.getElementById('dealValue').value = '';
-    document.getElementById('dealDesc').value = '';
-    document.getElementById('dealStage').value = 'Toplantı';
-    document.getElementById('dealCompany').value = '';
+                          
+    const customInput = document.getElementById('dealCompanyCustom');
+    if (customInput) {
+      customInput.classList.add('hidden');
+      customInput.value = '';
+    }
+
+    if (dealId) {
+      const d = (allDeals || []).find(x => x.id === dealId);
+      if (d) {
+        document.getElementById('dealModalTitle').textContent = 'Fırsatı Düzenle';
+        document.getElementById('dealValue').value = d.value || '';
+        document.getElementById('dealDesc').value = d.desc || '';
+        document.getElementById('dealStage').value = d.stage || 'Toplantı';
+        if (compSel && d.company) {
+          const exists = Array.from(compSel.options).some(o => o.value === d.company);
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = d.company; opt.textContent = d.company;
+            compSel.appendChild(opt);
+          }
+          compSel.value = d.company;
+        }
+      }
+    } else {
+      document.getElementById('dealModalTitle').textContent = 'Yeni Fırsat Ekle';
+      document.getElementById('dealValue').value = '';
+      document.getElementById('dealDesc').value = '';
+      document.getElementById('dealStage').value = 'Toplantı';
+      if (compSel) compSel.value = '';
+    }
+    const delBtn = document.getElementById('dealDeleteBtn');
+    if (delBtn) delBtn.style.display = dealId ? 'inline-block' : 'none';
+  } catch (err) {
+    console.error('openDealModal hatasi:', err);
   }
-  document.getElementById('dealDeleteBtn').style.display = dealId ? 'inline-block' : 'none';
-  document.getElementById('dealModal').classList.remove('hidden');
 }
 
 function deleteDeal() {

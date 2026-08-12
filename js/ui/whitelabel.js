@@ -16,51 +16,63 @@ function handleWlCompanyChange() {
 }
 
 function openWlModal(id) {
-  id = id || null;
+  if (typeof id !== 'string') id = null;
   editWlId = id;
-  const compSel = document.getElementById('wlCompany');
-  const actCompanies = Array.from(new Set(allActivities.map(function (a) { return a.company; }).filter(function (c) { return c; })));
-  const allComp = Array.from(new Set(COMPANIES.concat(actCompanies))).sort(function (a, b) { return a.localeCompare(b, 'tr'); });
-  compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
-    allComp.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
-    '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
-  document.getElementById('wlCompanyCustom').classList.add('hidden');
-  document.getElementById('wlCompanyCustom').value = '';
+  const modal = document.getElementById('wlModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
 
-  const delBtn = document.getElementById('wlDeleteBtn');
-  if (id) {
-    const r = allWlRecords.find(function (x) { return x.id === id; });
-    if (r) {
-      document.getElementById('wlModalTitle').textContent = 'Kaydı Düzenle';
-      document.getElementById('wlMonth').value = r.month || 'OCAK';
-      if (compSel && r.company) {
-        const exists = Array.from(compSel.options).some(function (o) { return o.value === r.company; });
-        if (!exists) {
-          const opt = document.createElement('option');
-          opt.value = r.company; opt.textContent = r.company;
-          compSel.insertBefore(opt, compSel.lastElementChild);
-        }
-        compSel.value = r.company;
-      }
-      document.getElementById('wlPackage').value = r.package || '';
-      document.getElementById('wlQty').value = r.qty || '';
-      document.getElementById('wlUnitPrice').value = r.unitPrice || '';
-      document.getElementById('wlNote').value = r.note || '';
-      calcWlTotal();
+  try {
+    const compSel = document.getElementById('wlCompany');
+    const actCompanies = Array.from(new Set((allActivities || []).map(function (a) { return a.company; }).filter(function (c) { return c; })));
+    const allComp = Array.from(new Set((COMPANIES || []).concat(actCompanies))).sort(function (a, b) { return a.localeCompare(b, 'tr'); });
+    if (compSel) {
+      compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
+        allComp.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
+        '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
     }
-    if (delBtn) delBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'inline-block' : 'none';
-  } else {
-    document.getElementById('wlModalTitle').textContent = 'White Label Kaydı Ekle';
-    const normalize = function (s) { return s.toUpperCase().replace(/\u0130/g, 'I').replace(/\u011e/g, 'G').replace(/\u00dc/g, 'U').replace(/\u015e/g, 'S').replace(/\u00d6/g, 'O').replace(/\u00c7/g, 'C'); };
-    const pm = normalize((currentPeriod || '').split(' ')[0]);
-    const matched = MONTHS_ORDER.find(function (m) { return normalize(m) === pm; });
-    document.getElementById('wlMonth').value = matched || 'OCAK';
-    compSel.value = '';
-    ['wlPackage', 'wlQty', 'wlUnitPrice', 'wlNote'].forEach(function (eid) { document.getElementById(eid).value = ''; });
-    document.getElementById('wlTotalPreview').textContent = '0 TL';
-    if (delBtn) delBtn.style.display = 'none';
+    const ci = document.getElementById('wlCompanyCustom');
+    if (ci) { ci.classList.add('hidden'); ci.value = ''; }
+
+    const delBtn = document.getElementById('wlDeleteBtn');
+    if (id) {
+      const r = (allWlRecords || []).find(function (x) { return x.id === id; });
+      if (r) {
+        document.getElementById('wlModalTitle').textContent = 'Kaydı Düzenle';
+        document.getElementById('wlMonth').value = r.month || 'OCAK';
+        if (compSel && r.company) {
+          const exists = Array.from(compSel.options).some(function (o) { return o.value === r.company; });
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = r.company; opt.textContent = r.company;
+            compSel.appendChild(opt);
+          }
+          compSel.value = r.company;
+        }
+        document.getElementById('wlPackage').value = r.package || '';
+        document.getElementById('wlQty').value = r.qty || '';
+        document.getElementById('wlUnitPrice').value = r.unitPrice || '';
+        document.getElementById('wlNote').value = r.note || '';
+        calcWlTotal();
+      }
+      if (delBtn) delBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'inline-block' : 'none';
+    } else {
+      document.getElementById('wlModalTitle').textContent = 'White Label Kaydı Ekle';
+      const normalize = function (s) { return (s || '').toUpperCase().replace(/\u0130/g, 'I').replace(/\u011e/g, 'G').replace(/\u00dc/g, 'U').replace(/\u015e/g, 'S').replace(/\u00d6/g, 'O').replace(/\u00c7/g, 'C'); };
+      const pm = normalize((currentPeriod || '').split(' ')[0]);
+      const matched = MONTHS_ORDER.find(function (m) { return normalize(m) === pm; });
+      document.getElementById('wlMonth').value = matched || 'OCAK';
+      if (compSel) compSel.value = '';
+      document.getElementById('wlPackage').value = '';
+      document.getElementById('wlQty').value = '';
+      document.getElementById('wlUnitPrice').value = '';
+      document.getElementById('wlNote').value = '';
+      document.getElementById('wlTotalPreview').textContent = '0 TL';
+      if (delBtn) delBtn.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('openWlModal hatasi:', err);
   }
-  document.getElementById('wlModal').classList.remove('hidden');
 }
 
 function saveWlRecord() {

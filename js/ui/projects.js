@@ -167,84 +167,90 @@ function handleProjCompanyChange() {
 }
 
 function openProjectModal(projId = null) {
+  if (typeof projId !== 'string') projId = null;
   editProjectId = projId;
   const modal = document.getElementById('projectModal');
-  if (!modal) { console.error('projectModal bulunamadı!'); return; }
+  if (!modal) return;
 
-  const compSel = document.getElementById('projCompany');
-  const actCompanies = Array.from(new Set((allActivities || []).map(a => a.company).filter(c => c)));
-  const allComp = Array.from(new Set((COMPANIES || []).concat(actCompanies))).sort((a, b) => a.localeCompare(b, 'tr'));
-  
-  if (compSel) {
-    compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
-      allComp.map(c => `<option value="${c}">${c}</option>`).join('') +
-      '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
-  }
+  // Open modal immediately so user always sees the dialog!
+  modal.classList.remove('hidden');
 
-  const ci = document.getElementById('projCompanyCustom');
-  if (ci) { ci.classList.add('hidden'); ci.value = ''; }
-  
-  const delBtn = document.getElementById('projDeleteBtn');
-  
-  if (projId) {
-    const p = (allProjects || []).find(x => x.id === projId);
-    if (p) {
+  try {
+    const compSel = document.getElementById('projCompany');
+    const actCompanies = Array.from(new Set((allActivities || []).map(a => a.company).filter(c => c)));
+    const allComp = Array.from(new Set((COMPANIES || []).concat(actCompanies))).sort((a, b) => a.localeCompare(b, 'tr'));
+    
+    if (compSel) {
+      compSel.innerHTML = '<option value="">-- Kurum Seç --</option>' +
+        allComp.map(c => `<option value="${c}">${c}</option>`).join('') +
+        '<option value="__yeni__">+ Yeni Kurum Ekle...</option>';
+    }
+
+    const ci = document.getElementById('projCompanyCustom');
+    if (ci) { ci.classList.add('hidden'); ci.value = ''; }
+    
+    const delBtn = document.getElementById('projDeleteBtn');
+    
+    if (projId) {
+      const p = (allProjects || []).find(x => x.id === projId);
+      if (p) {
+        const titleEl = document.getElementById('projectModalTitle');
+        if (titleEl) titleEl.textContent = 'Projeyi Düzenle';
+        
+        const typeEl = document.getElementById('projType');
+        if (typeEl) typeEl.value = p.type || 'new';
+        
+        const monthEl = document.getElementById('projMonth');
+        if (monthEl) monthEl.value = p.month || 'OCAK';
+        
+        if (compSel && p.company) {
+          const exists = Array.from(compSel.options).some(o => o.value === p.company);
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = p.company; opt.textContent = p.company;
+            compSel.appendChild(opt);
+          }
+          compSel.value = p.company;
+        }
+        
+        const nameEl = document.getElementById('projName');
+        if (nameEl) nameEl.value = p.name || '';
+        
+        const valEl = document.getElementById('projValue');
+        if (valEl) valEl.value = p.value || '';
+        
+        const proEl = document.getElementById('projPro');
+        if (proEl) proEl.value = p.pro || '';
+        
+        const cepEl = document.getElementById('projCep');
+        if (cepEl) cepEl.value = p.cep || '';
+        
+        const noteEl = document.getElementById('projNote');
+        if (noteEl) noteEl.value = p.note || '';
+      }
+      if (delBtn) delBtn.style.display = (currentUser && currentUser.role !== 'viewer') ? 'inline-block' : 'none';
+    } else {
       const titleEl = document.getElementById('projectModalTitle');
-      if (titleEl) titleEl.textContent = 'Projeyi Düzenle';
+      if (titleEl) titleEl.textContent = 'Proje Ekle';
       
       const typeEl = document.getElementById('projType');
-      if (typeEl) typeEl.value = p.type || 'new';
+      if (typeEl) typeEl.value = currentReportType !== 'kanban' ? currentReportType : 'new';
       
+      if (compSel) compSel.value = '';
+      ['projName', 'projValue', 'projPro', 'projCep', 'projNote'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      if (delBtn) delBtn.style.display = 'none';
+      const normalize = s => (s || '').toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+      const pm = normalize((currentPeriod || '').split(' ')[0]);
+      const matched = MONTHS_ORDER.find(m => normalize(m) === pm);
       const monthEl = document.getElementById('projMonth');
-      if (monthEl) monthEl.value = p.month || 'OCAK';
-      
-      if (compSel && p.company) {
-        const exists = [...compSel.options].some(o => o.value === p.company);
-        if (!exists) {
-          const opt = document.createElement('option');
-          opt.value = p.company; opt.textContent = p.company;
-          compSel.insertBefore(opt, compSel.lastElementChild);
-        }
-        compSel.value = p.company;
-      }
-      
-      const nameEl = document.getElementById('projName');
-      if (nameEl) nameEl.value = p.name || '';
-      
-      const valEl = document.getElementById('projValue');
-      if (valEl) valEl.value = p.value || '';
-      
-      const proEl = document.getElementById('projPro');
-      if (proEl) proEl.value = p.pro || '';
-      
-      const cepEl = document.getElementById('projCep');
-      if (cepEl) cepEl.value = p.cep || '';
-      
-      const noteEl = document.getElementById('projNote');
-      if (noteEl) noteEl.value = p.note || '';
+      if (monthEl) monthEl.value = matched || 'OCAK';
     }
-    if (delBtn) delBtn.style.display = (currentUser && currentUser.role !== 'viewer') ? 'block' : 'none';
-  } else {
-    const titleEl = document.getElementById('projectModalTitle');
-    if (titleEl) titleEl.textContent = 'Proje Ekle';
-    
-    const typeEl = document.getElementById('projType');
-    if (typeEl) typeEl.value = currentReportType !== 'kanban' ? currentReportType : 'new';
-    
-    if (compSel) compSel.value = '';
-    ['projName', 'projValue', 'projPro', 'projCep', 'projNote'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    if (delBtn) delBtn.style.display = 'none';
-    const normalize = s => s.toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
-    const pm = normalize((currentPeriod || '').split(' ')[0]);
-    const matched = MONTHS_ORDER.find(m => normalize(m) === pm);
-    const monthEl = document.getElementById('projMonth');
-    if (monthEl) monthEl.value = matched || 'OCAK';
+  } catch (err) {
+    console.error('openProjectModal hatasi:', err);
   }
-  
-  modal.classList.remove('hidden');
 }
 
 function saveProject() {

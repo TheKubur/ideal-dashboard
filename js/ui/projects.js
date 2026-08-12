@@ -37,7 +37,7 @@ function switchReportTab(tab) {
   
   const isProjectTab = tab === 'new' || tab === 'onetime';
   const isWlTab = tab === 'whitelabel';
-  const canAdd = currentUser && currentUser.role !== 'viewer';
+  const canAdd = !currentUser || currentUser.role !== 'viewer';
   
   if (dealBtn) dealBtn.style.display = tab === 'kanban' ? 'inline-block' : 'none';
   if (projBtn) projBtn.style.display = (isProjectTab && canAdd) ? 'inline-block' : 'none';
@@ -57,7 +57,7 @@ function exportProjectsExcel() {
     return;
   }
   if (type === 'kanban' || type === 'analytics') return;
-  const list = allProjects.filter(p => p.type === type);
+  const list = (allProjects || []).filter(p => p.type === type);
   if (!list.length) { showToast('Tablo boş, dışa aktarılacak kayıt yok.', 'warning'); return; }
 
   const sheetName = type === 'new' ? 'Yeni Eklenen Projeler' : 'Tek Seferlik Projeler';
@@ -110,7 +110,7 @@ function renderProjects(type) {
   }
   const byMonth = {};
   list.forEach(p => { if (!byMonth[p.month]) byMonth[p.month] = []; byMonth[p.month].push(p); });
-  const canEdit = currentUser && currentUser.role !== 'viewer';
+  const canEdit = !currentUser || currentUser.role !== 'viewer';
   let html = `<div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-top:1rem;">
     <table style="width:100%;border-collapse:collapse;font-family:'Outfit',sans-serif;font-size:0.85rem;">
       <thead><tr style="background:#c8d8c4;color:#1a3a1a;font-weight:700;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;">
@@ -172,8 +172,8 @@ function openProjectModal(projId = null) {
   const modal = document.getElementById('projectModal');
   if (!modal) return;
 
-  // Open modal immediately so user always sees the dialog!
   modal.classList.remove('hidden');
+  modal.style.display = 'flex';
 
   try {
     const compSel = document.getElementById('projCompany');
@@ -228,7 +228,7 @@ function openProjectModal(projId = null) {
         const noteEl = document.getElementById('projNote');
         if (noteEl) noteEl.value = p.note || '';
       }
-      if (delBtn) delBtn.style.display = (currentUser && currentUser.role !== 'viewer') ? 'inline-block' : 'none';
+      if (delBtn) delBtn.style.display = (!currentUser || currentUser.role !== 'viewer') ? 'inline-block' : 'none';
     } else {
       const titleEl = document.getElementById('projectModalTitle');
       if (titleEl) titleEl.textContent = 'Proje Ekle';

@@ -94,6 +94,15 @@ document.addEventListener('click', function(e) {
   }
 });
 
+function closeWlModal() {
+  const modal = document.getElementById('wlModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+window.closeWlModal = closeWlModal;
+
 function saveWlRecord() {
   const month = document.getElementById('wlMonth').value;
   const selVal = document.getElementById('wlCompany').value;

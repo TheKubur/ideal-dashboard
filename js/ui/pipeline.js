@@ -81,6 +81,15 @@ document.addEventListener('click', function(e) {
   }
 });
 
+function closeDealModal() {
+  const modal = document.getElementById('dealModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+window.closeDealModal = closeDealModal;
+
 function deleteDeal() {
   if (!editDealId) return;
   if (currentUser.role !== 'admin') return;

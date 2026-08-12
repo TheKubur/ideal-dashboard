@@ -278,6 +278,15 @@ document.addEventListener('click', function(e) {
   }
 });
 
+function closeProjectModal() {
+  const modal = document.getElementById('projectModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+window.closeProjectModal = closeProjectModal;
+
 function saveProject() {
   const type = document.getElementById('projType').value;
   const month = document.getElementById('projMonth').value;
@@ -294,7 +303,7 @@ function saveProject() {
   const btn = document.getElementById('projSaveBtn');
   btn.textContent = 'Kaydediliyor...'; btn.disabled = true;
   const data = { type, month, company, name, value, pro, cep, note, period: currentPeriod, updatedAt: new Date().toISOString() };
-  const done = () => { showToast(editProjectId ? 'Proje güncellendi.' : 'Proje eklendi! ✅', 'success'); document.getElementById('projectModal').classList.add('hidden'); btn.textContent = 'Kaydet'; btn.disabled = false; };
+  const done = () => { showToast(editProjectId ? 'Proje güncellendi.' : 'Proje eklendi! ✅', 'success'); closeProjectModal(); btn.textContent = 'Kaydet'; btn.disabled = false; };
   const fail = e => { showToast('Hata: ' + e.message, 'error'); btn.textContent = 'Kaydet'; btn.disabled = false; };
   if (editProjectId) {
     db.collection('projects').doc(editProjectId).update(data).then(done).catch(fail);
@@ -309,7 +318,7 @@ function deleteProject() {
   if (!editProjectId || currentUser.role !== 'admin') return;
   if (!confirm('Bu projeyi silmek istediğine emin misin?')) return;
   db.collection('projects').doc(editProjectId).delete()
-    .then(() => { showToast('Proje silindi.', 'success'); document.getElementById('projectModal').classList.add('hidden'); })
+    .then(() => { showToast('Proje silindi.', 'success'); closeProjectModal(); })
     .catch(e => showToast('Hata: ' + e.message, 'error'));
 }
 

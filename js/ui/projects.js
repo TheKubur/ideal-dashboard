@@ -167,16 +167,22 @@ function handleProjCompanyChange() {
 }
 
 function openProjectModal(projId = null) {
-  if (typeof projId !== 'string') projId = null;
-  editProjectId = projId;
-  const modal = document.getElementById('projectModal');
-  if (!modal) return;
-
-  modal.classList.remove('hidden');
-  modal.style.display = 'flex';
-  modal.style.zIndex = '99999';
-
   try {
+    if (typeof projId !== 'string') projId = null;
+    editProjectId = projId;
+    let modal = document.getElementById('projectModal');
+    if (!modal) modal = document.querySelector('#projectModal');
+    if (!modal) {
+      if (typeof showToast === 'function') showToast('Modal bulunamadı: projectModal', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+
     const compSel = document.getElementById('projCompany');
     const actCompanies = Array.from(new Set((allActivities || []).map(a => a.company).filter(c => c)));
     const allComp = Array.from(new Set((COMPANIES || []).concat(actCompanies))).sort((a, b) => a.localeCompare(b, 'tr'));
@@ -193,7 +199,7 @@ function openProjectModal(projId = null) {
     const delBtn = document.getElementById('projDeleteBtn');
     
     if (projId) {
-      const p = (allProjects || []).find(x => x.id === projId);
+      const p = (allProjects || []).find(x => String(x.id) === String(projId));
       if (p) {
         const titleEl = document.getElementById('projectModalTitle');
         if (titleEl) titleEl.textContent = 'Projeyi Düzenle';
@@ -251,6 +257,7 @@ function openProjectModal(projId = null) {
     }
   } catch (err) {
     console.error('openProjectModal hatasi:', err);
+    if (typeof showToast === 'function') showToast('Modal hatasi: ' + err.message, 'error');
   }
 }
 

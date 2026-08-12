@@ -367,8 +367,8 @@ function saveAndDownloadProposal() {
 
 /* ── EDIT MODE ── */
 function enterEditMode(id) {
-  if (typeof switchTab === 'function') switchTab('proposals');
-  const prop = allProposals.find(p => p.id === id);
+  if (typeof switchTab === 'function') switchTab('teklif');
+  const prop = (allProposals || []).find(p => String(p.id) === String(id));
   if (!prop) { showToast('Teklif bulunamadı!', 'error'); return; }
 
   editingProposalId = id;

@@ -58,7 +58,14 @@ function openModal(mid, dateStr, defaultField) {
   if (cb) cb.checked = false;
   const delBtn = document.getElementById('activityDeleteBtn');
   if (delBtn) delBtn.style.display = 'none';
-  document.getElementById('activityModal').classList.remove('hidden');
+  const modalEl = document.getElementById('activityModal');
+  if (modalEl) {
+    modalEl.classList.remove('hidden');
+    modalEl.style.display = 'flex';
+    modalEl.style.zIndex = '99999';
+    modalEl.style.opacity = '1';
+    modalEl.style.visibility = 'visible';
+  }
   handleFieldChange();
 }
 
@@ -124,7 +131,14 @@ function openEditModal(actId) {
   if (currentUser.role === 'admin') delBtn.style.display = 'block';
   else delBtn.style.display = 'none';
 
-  document.getElementById('activityModal').classList.remove('hidden');
+  const modalEl = document.getElementById('activityModal');
+  if (modalEl) {
+    modalEl.classList.remove('hidden');
+    modalEl.style.display = 'flex';
+    modalEl.style.zIndex = '99999';
+    modalEl.style.opacity = '1';
+    modalEl.style.visibility = 'visible';
+  }
   handleFieldChange();
 }
 

@@ -395,7 +395,7 @@ function enterEditMode(id) {
     else {
       const opt = document.createElement('option');
       opt.value = prop.company; opt.textContent = prop.company;
-      compSel.insertBefore(opt, compSel.lastElementChild);
+      compSel.appendChild(opt);
       compSel.value = prop.company;
     }
   }

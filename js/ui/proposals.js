@@ -712,10 +712,10 @@ function renderProposalsList() {
     const memberColor = p.memberId === 'admin' ? '#0d1f61' : (TEAM_DEF.find(x => x.id === p.memberId)?.deptColor || '#ccc');
     const teklif_no  = `ID-${p.createdAt.substring(2,4)}${p.createdAt.substring(5,7)}${p.createdAt.substring(8,10)}-${p.id ? p.id.substring(0,5).toUpperCase() : 'TEMP'}`;
     const editBtn = canEdit(p)
-      ? `<button class="crm-action-btn" style="background:var(--surface); border:1px solid var(--border); color:var(--ink2); padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="enterEditMode('${p.id}')">✏️ Düzenle</button>`
+      ? `<button class="crm-action-btn" data-prop-id="${p.id}" style="background:var(--surface); border:1px solid var(--border); color:var(--ink2); padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="event.stopPropagation(); enterEditMode(this.getAttribute('data-prop-id'))">✏️ Düzenle</button>`
       : '';
     const delBtn = isAdmin
-      ? `<button class="crm-action-btn" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="deleteProposal('${p.id}')">🗑️ Sil</button>`
+      ? `<button class="crm-action-btn" data-prop-id="${p.id}" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="event.stopPropagation(); deleteProposal(this.getAttribute('data-prop-id'))">🗑️ Sil</button>`
       : '';
     return `
       <tr>

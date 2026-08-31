@@ -168,13 +168,16 @@
               style="display:none;align-items:center;gap:0.4rem;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:99px;padding:0.28rem 0.9rem;font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;color:var(--ink);cursor:pointer">📤
               Dışarı Aktar ▾</button>
             <div id="exportMenu"
-              style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.18);overflow:hidden;z-index:200;min-width:180px;">
+              style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.18);overflow:hidden;z-index:200;min-width:210px;">
+              <button onclick="generateExecutivePresentationPDF('executive');closeExportMenu()"
+                style="width:100%;padding:0.75rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;color:var(--accent);display:flex;align-items:center;gap:0.6rem;">📊
+                Kurumsal Sunum Raporu (PDF)</button>
               <button onclick="exportToPDF();closeExportMenu()"
-                style="width:100%;padding:0.7rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:0.6rem;">📄
-                PDF olarak indir</button>
+                style="width:100%;padding:0.7rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:0.6rem;border-top:1px solid var(--border);">📄
+                Ekran Görüntü PDF Raporu</button>
               <button onclick="exportToExcel();closeExportMenu()"
                 style="width:100%;padding:0.7rem 1.1rem;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;font-size:0.82rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:0.6rem;border-top:1px solid var(--border);">📥
-                Excel olarak indir</button>
+                Excel Olarak İndir</button>
             </div>
           </div>
           <div class="user-badge">
@@ -1184,6 +1187,7 @@
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
   <script src="js/ui/proposals.js?v=4.0"></script>
+  <script src="js/ui/pdf_report_builder.js?v=4.0"></script>
 
   <!-- INIT -->
   <script src="js/main.js?v=4.0"></script>

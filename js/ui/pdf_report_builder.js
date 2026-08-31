@@ -32,15 +32,14 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   // Construct Offscreen HTML Presentation Template
   const wrapper = document.createElement('div');
   wrapper.id = 'pdfPresentationReportWrapper';
-  wrapper.style.cssText = 'position:fixed; top:-9999px; left:-9999px; width:794px; background:#f8fafc; font-family:"Outfit", "Helvetica Neue", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
+  wrapper.style.cssText = 'position:absolute; left:-9999px; top:0; width:794px; background:#ffffff; font-family:"Outfit", "Helvetica Neue", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
 
   wrapper.innerHTML = `
     <style>
       .pdf-page {
         width: 794px;
-        min-height: 1123px;
-        height: 1123px;
-        padding: 45px 50px;
+        min-height: 1120px;
+        padding: 40px 45px;
         box-sizing: border-box;
         position: relative;
         background: #ffffff;
@@ -339,15 +338,16 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
     html2canvas: {
       scale: 2,
       useCORS: true,
-      allowTaint: false,
-      logging: false
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff'
     },
-    jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(wrapper).save()
+  html2pdf().from(wrapper).set(opt).save()
     .then(() => {
-      document.body.removeChild(wrapper);
+      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
       if (typeof showToast === 'function') showToast('Kurumsal Sunum Raporu PDF olarak indirildi! 🎉', 'success');
     })
     .catch(err => {

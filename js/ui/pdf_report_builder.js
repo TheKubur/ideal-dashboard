@@ -32,7 +32,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   // Construct Offscreen HTML Presentation Template
   const wrapper = document.createElement('div');
   wrapper.id = 'pdfPresentationReportWrapper';
-  wrapper.style.cssText = 'position:absolute; left:-9999px; top:0; width:794px; background:#ffffff; font-family:"Outfit", "Helvetica Neue", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
+  wrapper.style.cssText = 'position:fixed; left:0; top:0; width:794px; z-index:-9999; opacity:1; pointer-events:none; background:#ffffff; font-family:"Outfit", "Helvetica Neue", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
 
   wrapper.innerHTML = `
     <style>
@@ -339,6 +339,9 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
       scale: 2,
       useCORS: true,
       allowTaint: true,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 794,
       logging: false,
       backgroundColor: '#ffffff'
     },

@@ -29,124 +29,22 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const totalCRMCount = activitiesList.length;
   const teamMembers = (typeof TEAM_DEF !== 'undefined') ? TEAM_DEF : [];
 
-  // Construct Offscreen HTML Presentation Template
+  // Create wrapper & target container
   const wrapper = document.createElement('div');
-  wrapper.id = 'pdfPresentationReportWrapper';
-  wrapper.style.cssText = 'position:fixed; left:0; top:0; width:794px; z-index:-9999; opacity:1; pointer-events:none; background:#ffffff; font-family:"Outfit", "Helvetica Neue", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
+  wrapper.style.cssText = 'position:absolute; left:-9999px; top:0; background:#ffffff';
 
-  wrapper.innerHTML = `
-    <style>
-      .pdf-page {
-        width: 794px;
-        min-height: 1120px;
-        padding: 40px 45px;
-        box-sizing: border-box;
-        position: relative;
-        background: #ffffff;
-        page-break-after: always;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-      .pdf-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #0d1f61;
-        padding-bottom: 12px;
-        margin-bottom: 25px;
-      }
-      .pdf-footer {
-        border-top: 1px solid #cbd5e1;
-        padding-top: 12px;
-        margin-top: auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 10px;
-        color: #64748b;
-        font-weight: 500;
-      }
-      .kpi-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-      .kpi-card-pdf {
-        background: #f1f5f9;
-        border-left: 5px solid #0d1f61;
-        border-radius: 10px;
-        padding: 16px 20px;
-      }
-      .kpi-card-pdf.accent {
-        border-left-color: #f24f00;
-        background: #fff7ed;
-      }
-      .kpi-card-pdf.green {
-        border-left-color: #10b981;
-        background: #ecfdf5;
-      }
-      .kpi-card-pdf.blue {
-        border-left-color: #3b82f6;
-        background: #eff6ff;
-      }
-      .kpi-val-pdf {
-        font-size: 22px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 4px;
-      }
-      .kpi-lbl-pdf {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #475569;
-        font-weight: 700;
-      }
-      .pdf-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-        font-size: 11px;
-      }
-      .pdf-table th {
-        background: #0d1f61;
-        color: #ffffff;
-        padding: 8px 10px;
-        text-align: left;
-        font-weight: 700;
-        font-size: 10px;
-        text-transform: uppercase;
-      }
-      .pdf-table td {
-        padding: 8px 10px;
-        border-bottom: 1px solid #e2e8f0;
-        color: #1e293b;
-      }
-      .pdf-table tr:nth-child(even) td {
-        background: #f8fafc;
-      }
-      .pdf-section-title {
-        font-size: 16px;
-        font-weight: 800;
-        color: #0d1f61;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border-bottom: 1px solid #e2e8f0;
-        padding-bottom: 6px;
-      }
-    </style>
+  const target = document.createElement('div');
+  target.id = 'pdfPresentationReportTarget';
+  target.style.cssText = 'width:750px; background:#ffffff; font-family:"Outfit", Arial, sans-serif; color:#0f172a; box-sizing:border-box;';
 
+  target.innerHTML = `
     <!-- SAYFA 1: KAPAK SAYFASI (COVER PAGE) -->
-    <div class="pdf-page" style="background: linear-gradient(135deg, #0d1f61 0%, #1e3a8a 100%); color: #ffffff;">
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:linear-gradient(135deg, #0d1f61 0%, #1e3a8a 100%); color:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-space-between;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-          ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:48px; filter:brightness(0) invert(1);" />` : '<h2 style="font-size:24px; font-weight:900; letter-spacing:1px; margin:0;">IDEAL DATA</h2>'}
+          ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:48px; filter:brightness(0) invert(1);" />` : '<h2 style="font-size:24px; font-weight:900; letter-spacing:1px; margin:0; color:#ffffff;">IDEAL DATA</h2>'}
         </div>
-        <div style="background:rgba(255,255,255,0.15); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;">
+        <div style="background:rgba(255,255,255,0.15); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#ffffff;">
           ${period} PERFORMANS RAPORU
         </div>
       </div>
@@ -155,7 +53,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         <div style="font-size:13px; text-transform:uppercase; letter-spacing:0.15em; color:#f24f00; font-weight:800; margin-bottom:12px;">
           KURUMSAL YÖNETİCİ SUNUMU
         </div>
-        <h1 style="font-size:36px; font-weight:900; line-height:1.25; margin:0 0 20px 0; color:#ffffff;">
+        <h1 style="font-size:34px; font-weight:900; line-height:1.25; margin:0 0 20px 0; color:#ffffff;">
           Dönemsel Satış, Aktivite &<br/>Proje Performans Analizi
         </h1>
         <div style="width:80px; height:4px; background:#f24f00; border-radius:2px; margin-bottom:24px;"></div>
@@ -164,31 +62,31 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         </p>
       </div>
 
-      <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:24px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
-        <div>
+      <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:24px; display:flex; justify-content:space-between; margin-bottom:40px;">
+        <div style="flex:1;">
           <div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:700;">Hazırlayan</div>
           <div style="font-size:14px; font-weight:700; color:#ffffff; margin-top:4px;">${preparedByName}</div>
         </div>
-        <div>
+        <div style="flex:1;">
           <div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:700;">Rapor Tarihi</div>
           <div style="font-size:14px; font-weight:700; color:#ffffff; margin-top:4px;">${today}</div>
         </div>
-        <div>
+        <div style="flex:1;">
           <div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:700;">Toplam İş Hacmi</div>
           <div style="font-size:14px; font-weight:800; color:#10b981; margin-top:4px;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
         </div>
       </div>
 
-      <div class="pdf-footer" style="border-top-color:rgba(255,255,255,0.15); color:#94a3b8;">
+      <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#94a3b8; font-weight:500;">
         <span>Gizli ve Özel · Ideal Data Finansal Teknolojiler A.Ş.</span>
         <span>Sayfa 1 / 3</span>
       </div>
     </div>
 
     <!-- SAYFA 2: YÖNETİCİ ÖZETİ & KPI ÖZETİ -->
-    <div class="pdf-page">
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
-        <div class="pdf-header">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
           <div style="display:flex; align-items:center; gap:12px;">
             ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:32px;" />` : '<strong style="color:#0d1f61; font-size:18px;">IDEAL DATA</strong>'}
             <span style="color:#cbd5e1;">|</span>
@@ -197,52 +95,56 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
           <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
         </div>
 
-        <div class="pdf-section-title">📊 Dönemsel Performans & KPI Göstergeleri</div>
+        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+          📊 Dönemsel Performans & KPI Göstergeleri
+        </div>
 
-        <div class="kpi-grid">
-          <div class="kpi-card-pdf green">
-            <div class="kpi-lbl-pdf">Toplam Proje & İş Hacmi</div>
-            <div class="kpi-val-pdf">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:24px;">
+          <div style="flex:1; min-width:320px; background:#ecfdf5; border-left:5px solid #10b981; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#047857; font-weight:700;">Toplam Proje & İş Hacmi</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
             <div style="font-size:10px; color:#047857; margin-top:4px; font-weight:600;">Yeni + Tek Seferlik + White Label</div>
           </div>
-          <div class="kpi-card-pdf accent">
-            <div class="kpi-lbl-pdf">Yeni Eklenen Proje Hacmi</div>
-            <div class="kpi-val-pdf">${newProjTotal.toLocaleString('tr-TR')} ₺</div>
+          <div style="flex:1; min-width:320px; background:#fff7ed; border-left:5px solid #f24f00; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#c2410c; font-weight:700;">Yeni Eklenen Proje Hacmi</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${newProjTotal.toLocaleString('tr-TR')} ₺</div>
             <div style="font-size:10px; color:#c2410c; margin-top:4px; font-weight:600;">${newProjects.length} adet yeni proje kaydı</div>
           </div>
-          <div class="kpi-card-pdf blue">
-            <div class="kpi-lbl-pdf">Toplam CRM Aktivitesi</div>
-            <div class="kpi-val-pdf">${totalCRMCount} Kayıt</div>
+          <div style="flex:1; min-width:320px; background:#eff6ff; border-left:5px solid #3b82f6; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#1d4ed8; font-weight:700;">Toplam CRM Aktivitesi</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${totalCRMCount} Kayıt</div>
             <div style="font-size:10px; color:#1d4ed8; margin-top:4px; font-weight:600;">Toplantı, randevu ve teklif süreçleri</div>
           </div>
-          <div class="kpi-card-pdf">
-            <div class="kpi-lbl-pdf">White Label Satış Hacmi</div>
-            <div class="kpi-val-pdf">${wlTotal.toLocaleString('tr-TR')} ₺</div>
+          <div style="flex:1; min-width:320px; background:#f1f5f9; border-left:5px solid #0d1f61; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#475569; font-weight:700;">White Label Satış Hacmi</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${wlTotal.toLocaleString('tr-TR')} ₺</div>
             <div style="font-size:10px; color:#475569; margin-top:4px; font-weight:600;">${wlList.length} kurum paketi</div>
           </div>
         </div>
 
-        <div class="pdf-section-title">👥 Ekip Aktivite & Performans Özeti</div>
-        <table class="pdf-table">
+        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+          👥 Ekip Aktivite & Performans Özeti
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
           <thead>
-            <tr>
-              <th>Ekip Üyesi</th>
-              <th>Departman</th>
-              <th style="text-align:center;">Aktivite Kaydı</th>
-              <th style="text-align:center;">Dönem Katkısı</th>
-              <th style="text-align:center;">Durum</th>
+            <tr style="background:#0d1f61; color:#ffffff;">
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Ekip Üyesi</th>
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Departman</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">Aktivite Kaydı</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">Dönem Katkısı</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">Durum</th>
             </tr>
           </thead>
           <tbody>
-            ${teamMembers.map(m => {
+            ${teamMembers.map((m, idx) => {
               const mActs = activitiesList.filter(a => a.memberId === m.id).length;
               return `
-                <tr>
-                  <td style="font-weight:700; color:#0f172a;">${m.name}</td>
-                  <td><span style="display:inline-block; padding:2px 8px; border-radius:10px; background:#f1f5f9; font-size:10px; font-weight:600;">${m.dept}</span></td>
-                  <td style="text-align:center; font-weight:700;">${mActs}</td>
-                  <td style="text-align:center;">${totalCRMCount > 0 ? Math.round((mActs / totalCRMCount) * 100) : 0}%</td>
-                  <td style="text-align:center;"><span style="color:#10b981; font-weight:700;">Aktif</span></td>
+                <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'};">
+                  <td style="padding:8px 10px; font-weight:700; color:#0f172a;">${m.name}</td>
+                  <td style="padding:8px 10px;"><span style="display:inline-block; padding:2px 8px; border-radius:10px; background:#f1f5f9; font-size:10px; font-weight:600; color:#475569;">${m.dept}</span></td>
+                  <td style="padding:8px 10px; text-align:center; font-weight:700; color:#0f172a;">${mActs}</td>
+                  <td style="padding:8px 10px; text-align:center; color:#0f172a;">${totalCRMCount > 0 ? Math.round((mActs / totalCRMCount) * 100) : 0}%</td>
+                  <td style="padding:8px 10px; text-align:center;"><span style="color:#10b981; font-weight:700;">Aktif</span></td>
                 </tr>
               `;
             }).join('')}
@@ -250,16 +152,16 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         </table>
       </div>
 
-      <div class="pdf-footer">
+      <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Kurumsal Raporlama Sistemi</span>
         <span>Sayfa 2 / 3</span>
       </div>
     </div>
 
     <!-- SAYFA 3: PROJE & FİNANSAL TABLOLAR -->
-    <div class="pdf-page">
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
-        <div class="pdf-header">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
           <div style="display:flex; align-items:center; gap:12px;">
             ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:32px;" />` : '<strong style="color:#0d1f61; font-size:18px;">IDEAL DATA</strong>'}
             <span style="color:#cbd5e1;">|</span>
@@ -268,51 +170,55 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
           <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
         </div>
 
-        <div class="pdf-section-title">💼 Yeni Eklenen Projeler (${newProjects.length} Kayıt)</div>
-        <table class="pdf-table">
+        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+          💼 Yeni Eklenen Projeler (${newProjects.length} Kayıt)
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
           <thead>
-            <tr>
-              <th>Dönem</th>
-              <th>Kurum Adı</th>
-              <th>Proje / İş Adı</th>
-              <th style="text-align:center;">PRO</th>
-              <th style="text-align:center;">CEP</th>
-              <th style="text-align:right;">Tutar (TL)</th>
+            <tr style="background:#0d1f61; color:#ffffff;">
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Dönem</th>
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Kurum Adı</th>
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Proje / İş Adı</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">PRO</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">CEP</th>
+              <th style="padding:8px 10px; text-align:right; font-weight:700; font-size:10px; text-transform:uppercase;">Tutar (TL)</th>
             </tr>
           </thead>
           <tbody>
-            ${newProjects.length ? newProjects.slice(0, 10).map(p => `
-              <tr>
-                <td style="font-weight:700;">${p.month || '—'}</td>
-                <td style="font-weight:600;">${p.company || '—'}</td>
-                <td>${p.name || '—'}</td>
-                <td style="text-align:center;">${p.pro || '—'}</td>
-                <td style="text-align:center;">${p.cep || '—'}</td>
-                <td style="text-align:right; font-weight:700; color:#059669;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
+            ${newProjects.length ? newProjects.slice(0, 10).map((p, idx) => `
+              <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'};">
+                <td style="padding:8px 10px; font-weight:700;">${p.month || '—'}</td>
+                <td style="padding:8px 10px; font-weight:600;">${p.company || '—'}</td>
+                <td style="padding:8px 10px;">${p.name || '—'}</td>
+                <td style="padding:8px 10px; text-align:center;">${p.pro || '—'}</td>
+                <td style="padding:8px 10px; text-align:center;">${p.cep || '—'}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#059669;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Bu dönemde kayıtlı yeni proje bulunmuyor.</td></tr>'}
+            `).join('') : '<tr><td colspan="6" style="padding:12px; text-align:center; color:#94a3b8;">Bu dönemde kayıtlı yeni proje bulunmuyor.</td></tr>'}
           </tbody>
         </table>
 
-        <div class="pdf-section-title" style="margin-top:20px;">⚡ Tek Seferlik Projeler (${onetimeProjects.length} Kayıt)</div>
-        <table class="pdf-table">
+        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin:20px 0 14px 0; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+          ⚡ Tek Seferlik Projeler (${onetimeProjects.length} Kayıt)
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
           <thead>
-            <tr>
-              <th>Dönem</th>
-              <th>Kurum Adı</th>
-              <th>Proje / İş Adı</th>
-              <th style="text-align:right;">Tutar (TL)</th>
+            <tr style="background:#0d1f61; color:#ffffff;">
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Dönem</th>
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Kurum Adı</th>
+              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Proje / İş Adı</th>
+              <th style="padding:8px 10px; text-align:right; font-weight:700; font-size:10px; text-transform:uppercase;">Tutar (TL)</th>
             </tr>
           </thead>
           <tbody>
-            ${onetimeProjects.length ? onetimeProjects.slice(0, 8).map(p => `
-              <tr>
-                <td style="font-weight:700;">${p.month || '—'}</td>
-                <td style="font-weight:600;">${p.company || '—'}</td>
-                <td>${p.name || '—'}</td>
-                <td style="text-align:right; font-weight:700; color:#2563eb;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
+            ${onetimeProjects.length ? onetimeProjects.slice(0, 8).map((p, idx) => `
+              <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'};">
+                <td style="padding:8px 10px; font-weight:700;">${p.month || '—'}</td>
+                <td style="padding:8px 10px; font-weight:600;">${p.company || '—'}</td>
+                <td style="padding:8px 10px;">${p.name || '—'}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#2563eb;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">Bu dönemde kayıtlı tek seferlik proje bulunmuyor.</td></tr>'}
+            `).join('') : '<tr><td colspan="4" style="padding:12px; text-align:center; color:#94a3b8;">Bu dönemde kayıtlı tek seferlik proje bulunmuyor.</td></tr>'}
           </tbody>
         </table>
 
@@ -322,39 +228,31 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         </div>
       </div>
 
-      <div class="pdf-footer">
+      <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
         <span>Sayfa 3 / 3</span>
       </div>
     </div>
   `;
 
+  wrapper.appendChild(target);
   document.body.appendChild(wrapper);
 
   const opt = {
-    margin: 0,
-    filename: `IdealData_Kurumsal_Sunum_${period.replace(/\s+/g, '_')}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 794,
-      logging: false,
-      backgroundColor: '#ffffff'
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    margin:      8,
+    filename:    `IdealData_Kurumsal_Sunum_${period.replace(/\s+/g, '_')}.pdf`,
+    image:       { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false, backgroundColor: '#ffffff' },
+    jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().from(wrapper).set(opt).save()
+  html2pdf().from(target).set(opt).save()
     .then(() => {
-      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+      if (document.body.contains(wrapper)) wrapper.remove();
       if (typeof showToast === 'function') showToast('Kurumsal Sunum Raporu PDF olarak indirildi! 🎉', 'success');
     })
     .catch(err => {
-      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+      if (document.body.contains(wrapper)) wrapper.remove();
       console.error('PDF sunum hatasi:', err);
       if (typeof showToast === 'function') showToast('PDF oluşturulurken hata oluştu: ' + err.message, 'error');
     });

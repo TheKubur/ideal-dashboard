@@ -13,18 +13,29 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const today = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const preparedByName = (typeof currentUser !== 'undefined' && currentUser.name) ? currentUser.name : 'Ideal Data Yönetim';
 
-  // Calculate Metrics
+  // Normalize & Extract Active Month
+  const normalizeMonth = s => (s || '').toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+  const activeMonthName = (period || '').split(' ')[0] || 'EYLÜL';
+  const activeMonthNorm = normalizeMonth(activeMonthName);
+
+  // Calculate Metrics (Current Active Month Only)
   const projectsList = (typeof allProjects !== 'undefined') ? allProjects : [];
   const activitiesList = (typeof allActivities !== 'undefined') ? allActivities : [];
   const wlList = (typeof allWhiteLabel !== 'undefined') ? allWhiteLabel : [];
 
-  const newProjects = projectsList.filter(p => p.type === 'new');
-  const onetimeProjects = projectsList.filter(p => p.type === 'onetime');
+  const currentMonthProjects = projectsList.filter(p => normalizeMonth(p.month) === activeMonthNorm);
+  const newProjects = currentMonthProjects.filter(p => p.type === 'new');
+  const onetimeProjects = currentMonthProjects.filter(p => p.type === 'onetime');
+  const currentMonthWlList = wlList.filter(w => normalizeMonth(w.month) === activeMonthNorm);
 
   const newProjTotal = newProjects.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0);
   const onetimeProjTotal = onetimeProjects.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0);
-  const wlTotal = wlList.reduce((sum, w) => sum + (parseFloat(w.totalPrice || (parseFloat(w.qty || 0) * parseFloat(w.unitPrice || 0))) || 0), 0);
+  const wlTotal = currentMonthWlList.reduce((sum, w) => sum + (parseFloat(w.totalPrice || (parseFloat(w.qty || 0) * parseFloat(w.unitPrice || 0))) || 0), 0);
   const grandTotalHacim = newProjTotal + onetimeProjTotal + wlTotal;
+
+  // Annual Total for comparison
+  const annualGrandTotal = projectsList.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0) +
+    wlList.reduce((sum, w) => sum + (parseFloat(w.totalPrice || (parseFloat(w.qty || 0) * parseFloat(w.unitPrice || 0))) || 0), 0);
 
   const totalCRMCount = activitiesList.length;
   const teamMembers = (typeof TEAM_DEF !== 'undefined') ? TEAM_DEF : [];
@@ -171,7 +182,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         </div>
 
         <div style="font-size:16px; font-weight:800; color:#0d1f61; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
-          💼 Yeni Eklenen Projeler (${newProjects.length} Kayıt)
+          💼 Yeni Eklenen Projeler — ${activeMonthName} (${newProjects.length} Kayıt)
         </div>
         <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
           <thead>
@@ -194,12 +205,12 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
                 <td style="padding:8px 10px; text-align:center;">${p.cep || '—'}</td>
                 <td style="padding:8px 10px; text-align:right; font-weight:700; color:#059669;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : '<tr><td colspan="6" style="padding:12px; text-align:center; color:#94a3b8;">Bu dönemde kayıtlı yeni proje bulunmuyor.</td></tr>'}
+            `).join('') : `<tr><td colspan="6" style="padding:12px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı yeni proje bulunmuyor.</td></tr>`}
           </tbody>
         </table>
 
         <div style="font-size:16px; font-weight:800; color:#0d1f61; margin:20px 0 14px 0; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
-          ⚡ Tek Seferlik Projeler (${onetimeProjects.length} Kayıt)
+          ⚡ Tek Seferlik Projeler — ${activeMonthName} (${onetimeProjects.length} Kayıt)
         </div>
         <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
           <thead>
@@ -218,12 +229,12 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
                 <td style="padding:8px 10px;">${p.name || '—'}</td>
                 <td style="padding:8px 10px; text-align:right; font-weight:700; color:#2563eb;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : '<tr><td colspan="4" style="padding:12px; text-align:center; color:#94a3b8;">Bu dönemde kayıtlı tek seferlik proje bulunmuyor.</td></tr>'}
+            `).join('') : `<tr><td colspan="4" style="padding:12px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı tek seferlik proje bulunmuyor.</td></tr>`}
           </tbody>
         </table>
 
         <div style="background:#0d1f61; color:#ffffff; padding:14px 20px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
-          <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Dönem Sonu Toplam Portföy Hacmi</span>
+          <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">MEVCUT AY (${activeMonthName.toUpperCase()}) TOPLAM PORTFÖY HACMİ</span>
           <span style="font-size:18px; font-weight:900; color:#10b981;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</span>
         </div>
       </div>

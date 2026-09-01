@@ -41,8 +41,8 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
     <!-- SAYFA 1: KAPAK SAYFASI (COVER PAGE) -->
     <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:linear-gradient(135deg, #0d1f61 0%, #1e3a8a 100%); color:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-space-between;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:48px; filter:brightness(0) invert(1);" />` : '<h2 style="font-size:24px; font-weight:900; letter-spacing:1px; margin:0; color:#ffffff;">IDEAL DATA</h2>'}
+        <div style="background:#ffffff; padding:8px 18px; border-radius:10px; display:inline-flex; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+          ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:36px; object-fit:contain;" />` : '<h2 style="font-size:20px; font-weight:900; letter-spacing:1px; margin:0; color:#0d1f61;">IDEAL DATA</h2>'}
         </div>
         <div style="background:rgba(255,255,255,0.15); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#ffffff;">
           ${period} PERFORMANS RAPORU

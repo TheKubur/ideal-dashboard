@@ -22,20 +22,37 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const projectsList = (typeof allProjects !== 'undefined') ? allProjects : [];
   const activitiesList = (typeof allActivities !== 'undefined') ? allActivities : [];
   const wlList = (typeof allWhiteLabel !== 'undefined') ? allWhiteLabel : [];
+  const proposalsList = (typeof allProposals !== 'undefined') ? allProposals : [];
 
   const currentMonthProjects = projectsList.filter(p => normalizeMonth(p.month) === activeMonthNorm);
   const newProjects = currentMonthProjects.filter(p => p.type === 'new');
   const onetimeProjects = currentMonthProjects.filter(p => p.type === 'onetime');
   const currentMonthWlList = wlList.filter(w => normalizeMonth(w.month) === activeMonthNorm);
 
+  // Proposals filtering for active month
+  const getProposalMonth = p => {
+    if (p.month) return p.month;
+    if (p.date) {
+      const d = new Date(p.date);
+      if (!isNaN(d.getTime())) {
+        const monthNames = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'];
+        return monthNames[d.getMonth()];
+      }
+    }
+    return '';
+  };
+
+  const currentMonthProposals = proposalsList.filter(p => {
+    const pm = getProposalMonth(p);
+    return pm ? (normalizeMonth(pm) === activeMonthNorm) : true;
+  });
+
   const newProjTotal = newProjects.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0);
   const onetimeProjTotal = onetimeProjects.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0);
   const wlTotal = currentMonthWlList.reduce((sum, w) => sum + (parseFloat(w.totalPrice || (parseFloat(w.qty || 0) * parseFloat(w.unitPrice || 0))) || 0), 0);
   const grandTotalHacim = newProjTotal + onetimeProjTotal + wlTotal;
 
-  // Annual Total for comparison
-  const annualGrandTotal = projectsList.reduce((sum, p) => sum + (parseFloat(p.value) || 0), 0) +
-    wlList.reduce((sum, w) => sum + (parseFloat(w.totalPrice || (parseFloat(w.qty || 0) * parseFloat(w.unitPrice || 0))) || 0), 0);
+  const proposalsTotal = currentMonthProposals.reduce((sum, p) => sum + (parseFloat(p.grandTotal || p.totalAmount || p.total) || 0), 0);
 
   const totalCRMCount = activitiesList.length;
   const teamMembers = (typeof TEAM_DEF !== 'undefined') ? TEAM_DEF : [];
@@ -69,7 +86,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
         </h1>
         <div style="width:80px; height:4px; background:#f24f00; border-radius:2px; margin-bottom:24px;"></div>
         <p style="font-size:14px; color:#cbd5e1; max-width:540px; line-height:1.6; margin:0;">
-          Bu rapor Ideal Data CRM platformu üzerinden üretilmiş olup; ekibin müşteri görüşmelerini, yeni ve tek seferlik projeleri, White Label satış hacimlerini ve dönemsel OKR hedeflerini içermektedir.
+          Bu rapor Ideal Data CRM platformu üzerinden üretilmiş olup; ekibin müşteri görüşmelerini, yeni ve tek seferlik projeleri, hazırlanan teklifleri ve White Label satış hacimlerini içermektedir.
         </p>
       </div>
 
@@ -83,7 +100,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
           <div style="font-size:14px; font-weight:700; color:#ffffff; margin-top:4px;">${today}</div>
         </div>
         <div style="flex:1;">
-          <div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:700;">Toplam İş Hacmi</div>
+          <div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:700;">Proje Portföy Hacmi</div>
           <div style="font-size:14px; font-weight:800; color:#10b981; margin-top:4px;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
         </div>
       </div>
@@ -116,6 +133,11 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
             <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
             <div style="font-size:10px; color:#047857; margin-top:4px; font-weight:600;">Yeni + Tek Seferlik + White Label</div>
           </div>
+          <div style="flex:1; min-width:320px; background:#f3e8ff; border-left:5px solid #8b5cf6; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6b21a8; font-weight:700;">Gönderilen Teklif Hacmi</div>
+            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${proposalsTotal.toLocaleString('tr-TR')} ₺</div>
+            <div style="font-size:10px; color:#6b21a8; margin-top:4px; font-weight:600;">${currentMonthProposals.length} adet sunulan teklif</div>
+          </div>
           <div style="flex:1; min-width:320px; background:#fff7ed; border-left:5px solid #f24f00; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
             <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#c2410c; font-weight:700;">Yeni Eklenen Proje Hacmi</div>
             <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${newProjTotal.toLocaleString('tr-TR')} ₺</div>
@@ -125,11 +147,6 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
             <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#1d4ed8; font-weight:700;">Toplam CRM Aktivitesi</div>
             <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${totalCRMCount} Kayıt</div>
             <div style="font-size:10px; color:#1d4ed8; margin-top:4px; font-weight:600;">Toplantı, randevu ve teklif süreçleri</div>
-          </div>
-          <div style="flex:1; min-width:320px; background:#f1f5f9; border-left:5px solid #0d1f61; border-radius:10px; padding:16px 20px; box-sizing:border-box;">
-            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#475569; font-weight:700;">White Label Satış Hacmi</div>
-            <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:4px;">${wlTotal.toLocaleString('tr-TR')} ₺</div>
-            <div style="font-size:10px; color:#475569; margin-top:4px; font-weight:600;">${wlList.length} kurum paketi</div>
           </div>
         </div>
 
@@ -169,73 +186,105 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
       </div>
     </div>
 
-    <!-- SAYFA 3: PROJE & FİNANSAL TABLOLAR -->
+    <!-- SAYFA 3: PROJE, TEKLİF & FİNANSAL TABLOLAR -->
     <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
           <div style="display:flex; align-items:center; gap:12px;">
             ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:32px;" />` : '<strong style="color:#0d1f61; font-size:18px;">IDEAL DATA</strong>'}
             <span style="color:#cbd5e1;">|</span>
-            <span style="font-size:13px; font-weight:700; color:#475569;">Finansal Proje Detay Raporu</span>
+            <span style="font-size:13px; font-weight:700; color:#475569;">Finansal Proje & Teklif Detay Raporu</span>
           </div>
           <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
         </div>
 
-        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+        <div style="font-size:15px; font-weight:800; color:#6b21a8; margin-bottom:10px; border-bottom:1px solid #f3e8ff; padding-bottom:4px;">
+          📄 Hazırlanan & Gönderilen Teklifler — ${activeMonthName} (${currentMonthProposals.length} Kayıt)
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10px;">
+          <thead>
+            <tr style="background:#6b21a8; color:#ffffff;">
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Teklif No</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Kurum Adı</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">İlgili Kişi</th>
+              <th style="padding:6px 8px; text-align:center; font-weight:700; font-size:9px; text-transform:uppercase;">Tarih</th>
+              <th style="padding:6px 8px; text-align:right; font-weight:700; font-size:9px; text-transform:uppercase;">Tutar (TL)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${currentMonthProposals.length ? currentMonthProposals.slice(0, 6).map((pr, idx) => `
+              <tr style="border-bottom:1px solid #f3e8ff; background:${idx%2===0?'#ffffff':'#faf5ff'};">
+                <td style="padding:6px 8px; font-weight:700; color:#6b21a8;">${pr.proposalNo || pr.id || '—'}</td>
+                <td style="padding:6px 8px; font-weight:600;">${pr.company || '—'}</td>
+                <td style="padding:6px 8px;">${pr.contactPerson || '—'}</td>
+                <td style="padding:6px 8px; text-align:center;">${pr.date || '—'}</td>
+                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#7c3aed;">${(parseFloat(pr.grandTotal || pr.totalAmount || pr.total) || 0).toLocaleString('tr-TR')} ₺</td>
+              </tr>
+            `).join('') : `<tr><td colspan="5" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı teklif bulunmuyor.</td></tr>`}
+          </tbody>
+        </table>
+
+        <div style="font-size:15px; font-weight:800; color:#0d1f61; margin:16px 0 10px 0; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
           💼 Yeni Eklenen Projeler — ${activeMonthName} (${newProjects.length} Kayıt)
         </div>
-        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
+        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10px;">
           <thead>
             <tr style="background:#0d1f61; color:#ffffff;">
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Dönem</th>
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Kurum Adı</th>
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Proje / İş Adı</th>
-              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">PRO</th>
-              <th style="padding:8px 10px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase;">CEP</th>
-              <th style="padding:8px 10px; text-align:right; font-weight:700; font-size:10px; text-transform:uppercase;">Tutar (TL)</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Dönem</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Kurum Adı</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Proje / İş Adı</th>
+              <th style="padding:6px 8px; text-align:center; font-weight:700; font-size:9px; text-transform:uppercase;">PRO</th>
+              <th style="padding:6px 8px; text-align:center; font-weight:700; font-size:9px; text-transform:uppercase;">CEP</th>
+              <th style="padding:6px 8px; text-align:right; font-weight:700; font-size:9px; text-transform:uppercase;">Tutar (TL)</th>
             </tr>
           </thead>
           <tbody>
-            ${newProjects.length ? newProjects.slice(0, 10).map((p, idx) => `
+            ${newProjects.length ? newProjects.slice(0, 5).map((p, idx) => `
               <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'};">
-                <td style="padding:8px 10px; font-weight:700;">${p.month || '—'}</td>
-                <td style="padding:8px 10px; font-weight:600;">${p.company || '—'}</td>
-                <td style="padding:8px 10px;">${p.name || '—'}</td>
-                <td style="padding:8px 10px; text-align:center;">${p.pro || '—'}</td>
-                <td style="padding:8px 10px; text-align:center;">${p.cep || '—'}</td>
-                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#059669;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
+                <td style="padding:6px 8px; font-weight:700;">${p.month || '—'}</td>
+                <td style="padding:6px 8px; font-weight:600;">${p.company || '—'}</td>
+                <td style="padding:6px 8px;">${p.name || '—'}</td>
+                <td style="padding:6px 8px; text-align:center;">${p.pro || '—'}</td>
+                <td style="padding:6px 8px; text-align:center;">${p.cep || '—'}</td>
+                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#059669;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : `<tr><td colspan="6" style="padding:12px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı yeni proje bulunmuyor.</td></tr>`}
+            `).join('') : `<tr><td colspan="6" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı yeni proje bulunmuyor.</td></tr>`}
           </tbody>
         </table>
 
-        <div style="font-size:16px; font-weight:800; color:#0d1f61; margin:20px 0 14px 0; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+        <div style="font-size:15px; font-weight:800; color:#0d1f61; margin:16px 0 10px 0; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
           ⚡ Tek Seferlik Projeler — ${activeMonthName} (${onetimeProjects.length} Kayıt)
         </div>
-        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
+        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10px;">
           <thead>
             <tr style="background:#0d1f61; color:#ffffff;">
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Dönem</th>
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Kurum Adı</th>
-              <th style="padding:8px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase;">Proje / İş Adı</th>
-              <th style="padding:8px 10px; text-align:right; font-weight:700; font-size:10px; text-transform:uppercase;">Tutar (TL)</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Dönem</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Kurum Adı</th>
+              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Proje / İş Adı</th>
+              <th style="padding:6px 8px; text-align:right; font-weight:700; font-size:9px; text-transform:uppercase;">Tutar (TL)</th>
             </tr>
           </thead>
           <tbody>
-            ${onetimeProjects.length ? onetimeProjects.slice(0, 8).map((p, idx) => `
+            ${onetimeProjects.length ? onetimeProjects.slice(0, 5).map((p, idx) => `
               <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'};">
-                <td style="padding:8px 10px; font-weight:700;">${p.month || '—'}</td>
-                <td style="padding:8px 10px; font-weight:600;">${p.company || '—'}</td>
-                <td style="padding:8px 10px;">${p.name || '—'}</td>
-                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#2563eb;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
+                <td style="padding:6px 8px; font-weight:700;">${p.month || '—'}</td>
+                <td style="padding:6px 8px; font-weight:600;">${p.company || '—'}</td>
+                <td style="padding:6px 8px;">${p.name || '—'}</td>
+                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#2563eb;">${p.value ? Number(p.value).toLocaleString('tr-TR') + ' ₺' : '—'}</td>
               </tr>
-            `).join('') : `<tr><td colspan="4" style="padding:12px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı tek seferlik proje bulunmuyor.</td></tr>`}
+            `).join('') : `<tr><td colspan="4" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı tek seferlik proje bulunmuyor.</td></tr>`}
           </tbody>
         </table>
 
-        <div style="background:#0d1f61; color:#ffffff; padding:14px 20px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
-          <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">MEVCUT AY (${activeMonthName.toUpperCase()}) TOPLAM PORTFÖY HACMİ</span>
-          <span style="font-size:18px; font-weight:900; color:#10b981;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</span>
+        <div style="background:#0d1f61; color:#ffffff; padding:12px 20px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+          <div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">PROJE PORTFÖY HACMİ (${activeMonthName.toUpperCase()})</div>
+            <div style="font-size:16px; font-weight:900; color:#10b981; margin-top:2px;">${grandTotalHacim.toLocaleString('tr-TR')} ₺</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">GÖNDERİLEN TEKLİF HACMİ (${activeMonthName.toUpperCase()})</div>
+            <div style="font-size:16px; font-weight:900; color:#c084fc; margin-top:2px;">${proposalsTotal.toLocaleString('tr-TR')} ₺</div>
+          </div>
         </div>
       </div>
 

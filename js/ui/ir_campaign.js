@@ -55,10 +55,10 @@ function renderIRCampaign() {
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
         <div>
           <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(242,79,0,0.2); border:1px solid #f24f00; color:#ffedd5; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.5rem;">
-            🚀 KİŞİ BAŞI 10 KURUM SATIŞ HEDEFİ
+            🚀 STRATEJİK SATIŞ KAMPANYASI
           </div>
           <h2 style="font-size:1.6rem; font-weight:900; margin:0; color:#ffffff; letter-spacing:-0.02em;">Yatırımcı İlişkileri Modülü Satış Kampanyası</h2>
-          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:#cbd5e1;">Bireysel Hedef: Temsilci Başı Minimum 10 Kurum · Toplam Ekip Hedefi: ${totalTeamTarget} Kurum</p>
+          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:#cbd5e1;">Yatırımcı İlişkileri Modülü Satış & Hedef Takip Panosu</p>
         </div>
         <button onclick="openIRDealModal()" style="background:#f24f00; color:#ffffff; border:none; padding:0.75rem 1.4rem; border-radius:12px; font-weight:800; font-size:0.9rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(242,79,0,0.4); transition:all 0.2s;">
           <span>➕ Yeni Kurum / Fırsat Ekle</span>
@@ -68,7 +68,7 @@ function renderIRCampaign() {
       <!-- PROGRESS BAR -->
       <div style="background:rgba(255,255,255,0.12); border-radius:12px; padding:1.25rem; border:1px solid rgba(255,255,255,0.15); margin-bottom:1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-          <span style="font-size:0.85rem; font-weight:700; color:#e2e8f0;">GENEL EKİP KAZANIM HEDEFİ (${salesTeam.length} Temsilci × 10 Kurum = ${totalTeamTarget} Hedef)</span>
+          <span style="font-size:0.85rem; font-weight:700; color:#e2e8f0;">EKİP SATIŞ KAZANIM İLERLEMESİ</span>
           <span style="font-size:1.1rem; font-weight:900; color:#10b981;">${wonCount} / ${totalTeamTarget} KURUM KAZANILDI (%${targetPct})</span>
         </div>
         <div style="width:100%; height:14px; background:rgba(255,255,255,0.15); border-radius:10px; overflow:hidden; position:relative;">

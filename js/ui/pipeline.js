@@ -151,7 +151,7 @@ function renderPipeline() {
   Object.values(cols).forEach(c => { if (c.el) c.el.innerHTML = ''; });
 
   let list = allDeals;
-  if (currentUser.role !== 'admin') {
+  if (currentUser.role !== 'admin' && currentUser.role !== 'viewer') {
     list = allDeals.filter(d => d.memberId === currentUser.memberId);
   }
 

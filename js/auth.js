@@ -27,7 +27,7 @@ function doLogin() {
       document.getElementById('headerName').textContent = currentUser.name;
 
       const exportBtn = document.getElementById('exportDropBtn');
-      if (exportBtn) exportBtn.style.display = (currentUser.role === 'admin') ? 'inline-flex' : 'none';
+      if (exportBtn) exportBtn.style.display = (currentUser.role === 'admin' || currentUser.role === 'viewer') ? 'inline-flex' : 'none';
 
       const adminNotifBtn = document.getElementById('btnAdminNotification');
       if (adminNotifBtn) adminNotifBtn.style.display = (currentUser.role === 'admin') ? 'inline-flex' : 'none';
@@ -46,7 +46,7 @@ function doLogin() {
       
       const tabAnalyticsBtn = document.getElementById('tabBtnAnalytics');
       if (tabAnalyticsBtn) {
-        tabAnalyticsBtn.style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
+        tabAnalyticsBtn.style.display = (currentUser.role === 'admin' || currentUser.role === 'viewer') ? 'flex' : 'none';
       }
 
       const tabPersonalTasksBtn = document.getElementById('tabBtnPersonalTasks');
@@ -61,7 +61,7 @@ function doLogin() {
 
       const matrixTabBtn = document.getElementById('btnTeamTab-matrix');
       if (matrixTabBtn) {
-        matrixTabBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+        matrixTabBtn.style.display = (currentUser.role === 'admin' || currentUser.role === 'viewer') ? 'inline-block' : 'none';
       }
 
       if (typeof checkMemberNudges === 'function') {

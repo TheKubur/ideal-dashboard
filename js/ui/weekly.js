@@ -36,7 +36,7 @@ function renderWeekly() {
 
 function showTakipPopup() {
   const myId = currentUser.memberId;
-  let takipList = currentUser.role === 'admin'
+  let takipList = (currentUser.role === 'admin' || currentUser.role === 'viewer')
     ? allActivities.filter(a => a.status === 'Takip')
     : allActivities.filter(a => a.status === 'Takip' && a.memberId === myId);
 

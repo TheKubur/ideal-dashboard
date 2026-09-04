@@ -19,7 +19,7 @@ function calcEffortScore(memberId) {
 }
 
 function renderAnalytics() {
-  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'viewer')) return;
 
   const kpiStrip = document.getElementById('analyticsKpiStrip');
   const table = document.getElementById('analyticsTable');

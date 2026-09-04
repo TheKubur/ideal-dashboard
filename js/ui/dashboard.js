@@ -14,7 +14,7 @@ function closeExportMenu() {
 
 
 function exportToPDF() {
-  if (currentUser.role !== 'admin') return;
+  if (currentUser.role !== 'admin' && currentUser.role !== 'viewer') return;
   showToast('PDF hazırlanıyor...', 'success');
 
   const el = document.getElementById('tab-dashboard');
@@ -55,7 +55,7 @@ function exportToPDF() {
 }
 
 function exportToExcel() {
-  if (currentUser.role !== 'admin') return;
+  if (currentUser.role !== 'admin' && currentUser.role !== 'viewer') return;
   if (typeof XLSX === 'undefined') { showToast('Excel kütüphanesi yüklenmedi, lütfen internet bağlantısını kontrol edin.', 'error'); return; }
   const headers = ['Kişi', 'Departman', 'Kategori', 'Kurum', 'Durum', 'Açıklama', 'Sonraki Adım', 'Tarih', 'Dönem'];
   const rows = allActivities.map(a => [
@@ -125,7 +125,7 @@ function nudgeMember(mid) {
 }
 
 function checkMemberNudges() {
-  if (!currentUser || !currentUser.memberId || currentUser.role === 'admin') return;
+  if (!currentUser || !currentUser.memberId || currentUser.role === 'admin' || currentUser.role === 'viewer') return;
   if (typeof db === 'undefined' || !db) return;
 
   db.collection('nudges')
@@ -147,10 +147,10 @@ function renderTeam() {
   if (!grid) return;
   grid.innerHTML = '';
 
-  const isAdmin = currentUser && currentUser.role === 'admin';
+  const canViewAll = currentUser && (currentUser.role === 'admin' || currentUser.role === 'viewer');
 
-  // Gizlilik Kuralı: Yönetici değilse SADECE kendi kartını görsün
-  const visibleMembers = isAdmin
+  // Gizlilik Kuralı: Yönetici ve İzleyici TÜM ekibi görsün; temsilci sadece kendini görsün
+  const visibleMembers = canViewAll
     ? TEAM_DEF
     : TEAM_DEF.filter(m => currentUser && m.id === currentUser.memberId);
 

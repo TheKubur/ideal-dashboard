@@ -71,13 +71,47 @@ function renderDonut() {
 }
 
 function renderBarChart() {
-  const TREND = [2, 4, 3, 5, 0, 0], LABELS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'];
-  const chart = document.getElementById('barChart'); chart.innerHTML = '';
-  const max = Math.max(...TREND, 1);
-  TREND.forEach((v, i) => {
-    const col = document.createElement('div'); col.className = 'bar-col';
-    const h = v > 0 ? Math.max(8, Math.round((v / max) * 100)) : 4;
-    col.innerHTML = `<div style="flex:1;display:flex;align-items:flex-end;width:100%"><div class="bar-col-fill" style="height:${h}%;background:${v > 0 ? '#457b9d' : 'var(--border)'}"></div></div><div class="bar-col-label">${LABELS[i]}</div>`;
+  const chart = document.getElementById('barChart');
+  if (!chart) return;
+  chart.innerHTML = '';
+
+  const MONTH_NAMES = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  const MONTH_FULL = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'];
+
+  const normalizeMonth = s => (s || '').toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+
+  // Count activities for each month of the selected year
+  const monthlyCounts = MONTH_FULL.map((mFull, idx) => {
+    const norm = normalizeMonth(mFull);
+    return allActivities.filter(a => {
+      if (a.period && normalizeMonth(a.period).includes(norm)) return true;
+      if (a.createdAt) {
+        const d = new Date(a.createdAt);
+        if (!isNaN(d.getTime()) && d.getMonth() === idx) return true;
+      }
+      return false;
+    }).length;
+  });
+
+  const maxVal = Math.max(...monthlyCounts, 1);
+  const curMonthIdx = new Date().getMonth();
+
+  monthlyCounts.forEach((cnt, idx) => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.style.cssText = 'flex:1; display:flex; flex-direction:column; align-items:center; height:100%; min-width:24px; box-sizing:border-box;';
+    
+    const heightPct = cnt > 0 ? Math.max(12, Math.round((cnt / maxVal) * 100)) : 6;
+    const isCurrent = (idx === curMonthIdx);
+    const colColor = isCurrent ? '#f24f00' : (cnt > 0 ? '#0d1f61' : 'var(--border)');
+
+    col.innerHTML = `
+      <div style="font-size:0.7rem; font-weight:800; color:${isCurrent ? '#f24f00' : 'var(--ink)'}; margin-bottom:4px; height:16px;">${cnt > 0 ? cnt : ''}</div>
+      <div style="flex:1; display:flex; align-items:flex-end; width:100%; justify-content:center;">
+        <div class="bar-col-fill" style="width:60%; max-width:42px; height:${heightPct}%; background:${colColor}; border-radius:6px 6px 0 0; transition:all 0.4s ease;"></div>
+      </div>
+      <div class="bar-col-label" style="font-size:0.75rem; font-weight:${isCurrent ? '800' : '600'}; color:${isCurrent ? '#f24f00' : 'var(--ink2)'}; margin-top:6px;">${MONTH_NAMES[idx]}</div>
+    `;
     chart.appendChild(col);
   });
 }

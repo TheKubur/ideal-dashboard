@@ -43,6 +43,8 @@ function listenToActivities(period) {
     renderCRM();
     renderWeekly();
     renderWeeklySummary();
+    if (typeof renderBarChart === 'function') renderBarChart();
+    if (typeof updateCompanyKPIs === 'function') updateCompanyKPIs();
     loadMeetingNotes();
     updateCompanyKPIs();
     renderLeaderboard();

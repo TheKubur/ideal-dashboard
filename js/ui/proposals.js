@@ -255,7 +255,15 @@ function calculateProposalGrandTotal() {
   if (subtotalEl)   subtotalEl.textContent   = subtotal.toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺';
   if (vatEl)        vatEl.textContent         = '0.00 ₺';
   if (vatLabelEl)   vatLabelEl.textContent    = 'KDV:';
-  if (grandTotalEl) grandTotalEl.textContent  = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺';
+  if (grandTotalEl) {
+    if (propType === 'itemized_no_total') {
+      grandTotalEl.textContent = 'Toplamsız (Sadece Kalemler)';
+      grandTotalEl.style.fontSize = '0.9rem';
+    } else {
+      grandTotalEl.textContent = grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' ₺';
+      grandTotalEl.style.fontSize = '';
+    }
+  }
 }
 
 /* ── COLLECT FORM DATA ── */
@@ -490,8 +498,9 @@ function buildAndSavePDF(data, logoDataUrl) {
   const formattedDate = formatDate(data.date);
   const teklif_no = `ID-${data.createdAt.substring(2,4)}${data.createdAt.substring(5,7)}${data.createdAt.substring(8,10)}-${data.id ? data.id.substring(0,5).toUpperCase() : 'TEMP'}`;
 
-  // Check if it's package proposal
+  // Check proposal type
   const isPackage = data.proposalType === 'package';
+  const isItemizedNoTotal = data.proposalType === 'itemized_no_total';
 
   let tableHtml = '';
 
@@ -548,6 +557,14 @@ function buildAndSavePDF(data, logoDataUrl) {
       </tr>
     `).join('');
 
+    const grandTotalRowHtml = isItemizedNoTotal ? '' : `
+      <tr>
+        <td colspan="3" style="border:none"></td>
+        <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px; border-top:2px solid #cbd5e1">Genel Toplam:</td>
+        <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px; border-top:2px solid #cbd5e1">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+      </tr>
+    `;
+
     tableHtml = `
       <table style="width:100%; border-collapse:collapse; margin-bottom:28px">
         <thead>
@@ -561,11 +578,7 @@ function buildAndSavePDF(data, logoDataUrl) {
         </thead>
         <tbody>
           ${itemsRowsHtml}
-          <tr>
-            <td colspan="3" style="border:none"></td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#0d1f61; font-size:14px; border-top:2px solid #cbd5e1">Genel Toplam:</td>
-            <td style="padding:12px 8px; text-align:right; font-weight:800; color:#ffffff; background:#f24f00; font-size:14px; border-top:2px solid #cbd5e1">${Number(data.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
-          </tr>
+          ${grandTotalRowHtml}
         </tbody>
       </table>
     `;
@@ -724,13 +737,16 @@ function renderProposalsList() {
     const delBtn = isAdmin
       ? `<button class="crm-action-btn" data-prop-id="${p.id}" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="event.stopPropagation(); deleteProposal(this.getAttribute('data-prop-id'))">🗑️ Sil</button>`
       : '';
+    const priceDisplay = p.proposalType === 'itemized_no_total'
+      ? `${Number(p.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺ <span style="font-size:0.65rem; font-weight:600; color:var(--ink3); display:block;">(Kalem Bazlı / Toplamsız)</span>`
+      : `${Number(p.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺`;
     return `
       <tr>
         <td style="font-weight:700; font-family:monospace; font-size:0.78rem">${teklif_no}</td>
         <td class="crm-company">${p.company}</td>
         <td>${p.contactPerson || '<span style="color:var(--ink3)">—</span>'}</td>
         <td>${fmtDate(p.date)}</td>
-        <td style="font-weight:800; color:var(--green)">${Number(p.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
+        <td style="font-weight:800; color:var(--green)">${priceDisplay}</td>
         <td>
           <div class="crm-person">
             <span class="crm-person-dot" style="background:${memberColor}"></span>

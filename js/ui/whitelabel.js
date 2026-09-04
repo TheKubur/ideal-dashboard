@@ -229,6 +229,7 @@ function listenToWlRecords(year) {
       if (document.getElementById('report-view-whitelabel')?.style.display !== 'none') {
         renderWhiteLabel();
       }
+      if (typeof renderBarChart === 'function') renderBarChart();
     });
   globalUnsubscribeFns.push(unsub);
 }

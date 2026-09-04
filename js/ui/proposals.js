@@ -33,6 +33,7 @@ function listenToProposals() {
     if (document.getElementById('tab-teklif') && document.getElementById('tab-teklif').classList.contains('active')) {
       renderProposalsList();
     }
+    if (typeof renderBarChart === 'function') renderBarChart();
   }, err => {
     console.error('Proposals listener error:', err);
   });

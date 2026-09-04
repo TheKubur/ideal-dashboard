@@ -14,6 +14,7 @@ function listenToProjects(year) {
       if (currentReportType === 'new') renderProjects('new');
       else if (currentReportType === 'onetime') renderProjects('onetime');
     }
+    if (typeof renderBarChart === 'function') renderBarChart();
   });
   globalUnsubscribeFns.push(unsub);
 }

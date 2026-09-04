@@ -75,15 +75,21 @@ function renderBarChart() {
   if (!chart) return;
   chart.innerHTML = '';
 
-  const MONTH_NAMES = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-  const MONTH_FULL = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'];
+  const MONTH_NAMES = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const MONTH_SHORT = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 
   const normalizeMonth = s => (s || '').toUpperCase().replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
 
-  // Count activities for each month of the selected year
-  const monthlyCounts = MONTH_FULL.map((mFull, idx) => {
-    const norm = normalizeMonth(mFull);
-    return allActivities.filter(a => {
+  const actsList = (typeof allActivities !== 'undefined' && Array.isArray(allActivities)) ? allActivities : [];
+  const projsList = (typeof allProjects !== 'undefined' && Array.isArray(allProjects)) ? allProjects : [];
+  const wlList = (typeof allWlRecords !== 'undefined' && Array.isArray(allWlRecords)) ? allWlRecords : ((typeof allWhiteLabel !== 'undefined' && Array.isArray(allWhiteLabel)) ? allWhiteLabel : []);
+  const propList = (typeof allProposals !== 'undefined' && Array.isArray(allProposals)) ? allProposals : [];
+
+  // Calculate monthly total volume (Activities + Projects + Proposals + WL)
+  const monthlyCounts = MONTH_NAMES.map((mName, idx) => {
+    const norm = normalizeMonth(mName);
+
+    const actCount = actsList.filter(a => {
       if (a.period && normalizeMonth(a.period).includes(norm)) return true;
       if (a.createdAt) {
         const d = new Date(a.createdAt);
@@ -91,6 +97,19 @@ function renderBarChart() {
       }
       return false;
     }).length;
+
+    const projCount = projsList.filter(p => p.month && normalizeMonth(p.month).includes(norm)).length;
+    const wlCount = wlList.filter(w => w.month && normalizeMonth(w.month).includes(norm)).length;
+    const propCount = propList.filter(pr => {
+      if (pr.month && normalizeMonth(pr.month).includes(norm)) return true;
+      if (pr.date) {
+        const d = new Date(pr.date);
+        if (!isNaN(d.getTime()) && d.getMonth() === idx) return true;
+      }
+      return false;
+    }).length;
+
+    return actCount + projCount + wlCount + propCount;
   });
 
   const maxVal = Math.max(...monthlyCounts, 1);
@@ -101,16 +120,16 @@ function renderBarChart() {
     col.className = 'bar-col';
     col.style.cssText = 'flex:1; display:flex; flex-direction:column; align-items:center; height:100%; min-width:24px; box-sizing:border-box;';
     
-    const heightPct = cnt > 0 ? Math.max(12, Math.round((cnt / maxVal) * 100)) : 6;
+    const heightPct = cnt > 0 ? Math.max(14, Math.round((cnt / maxVal) * 100)) : 6;
     const isCurrent = (idx === curMonthIdx);
-    const colColor = isCurrent ? '#f24f00' : (cnt > 0 ? '#0d1f61' : 'var(--border)');
+    const colColor = isCurrent ? 'linear-gradient(180deg, #f24f00 0%, #ff7a00 100%)' : (cnt > 0 ? 'linear-gradient(180deg, #0d1f61 0%, #1e3a8a 100%)' : 'var(--border)');
 
     col.innerHTML = `
-      <div style="font-size:0.7rem; font-weight:800; color:${isCurrent ? '#f24f00' : 'var(--ink)'}; margin-bottom:4px; height:16px;">${cnt > 0 ? cnt : ''}</div>
+      <div style="font-size:0.75rem; font-weight:800; color:${isCurrent ? '#f24f00' : 'var(--ink)'}; margin-bottom:6px; height:16px;">${cnt > 0 ? cnt : ''}</div>
       <div style="flex:1; display:flex; align-items:flex-end; width:100%; justify-content:center;">
-        <div class="bar-col-fill" style="width:60%; max-width:42px; height:${heightPct}%; background:${colColor}; border-radius:6px 6px 0 0; transition:all 0.4s ease;"></div>
+        <div class="bar-col-fill" style="width:65%; max-width:44px; height:${heightPct}%; background:${colColor}; border-radius:6px 6px 0 0; transition:all 0.4s ease; box-shadow:${cnt > 0 ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'};"></div>
       </div>
-      <div class="bar-col-label" style="font-size:0.75rem; font-weight:${isCurrent ? '800' : '600'}; color:${isCurrent ? '#f24f00' : 'var(--ink2)'}; margin-top:6px;">${MONTH_NAMES[idx]}</div>
+      <div class="bar-col-label" style="font-size:0.75rem; font-weight:${isCurrent ? '800' : '600'}; color:${isCurrent ? '#f24f00' : 'var(--ink2)'}; margin-top:8px;">${MONTH_SHORT[idx]}</div>
     `;
     chart.appendChild(col);
   });

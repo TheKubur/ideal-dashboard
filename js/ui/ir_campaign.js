@@ -54,11 +54,7 @@ function renderIRCampaign() {
     <div style="background:linear-gradient(135deg, #0d1f61 0%, #1e3a8a 100%); border-radius:16px; padding:1.75rem; color:#ffffff; margin-bottom:2rem; box-shadow:0 10px 25px rgba(13,31,97,0.25);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
         <div>
-          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(242,79,0,0.2); border:1px solid #f24f00; color:#ffedd5; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.5rem;">
-            🚀 STRATEJİK SATIŞ KAMPANYASI
-          </div>
           <h2 style="font-size:1.6rem; font-weight:900; margin:0; color:#ffffff; letter-spacing:-0.02em;">Yatırımcı İlişkileri Modülü Satış Kampanyası</h2>
-          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:#cbd5e1;">Yatırımcı İlişkileri Modülü Satış & Hedef Takip Panosu</p>
         </div>
         <button onclick="openIRDealModal()" style="background:#f24f00; color:#ffffff; border:none; padding:0.75rem 1.4rem; border-radius:12px; font-weight:800; font-size:0.9rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(242,79,0,0.4); transition:all 0.2s;">
           <span>➕ Yeni Kurum / Fırsat Ekle</span>

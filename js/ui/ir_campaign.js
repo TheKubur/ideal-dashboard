@@ -33,10 +33,13 @@ function renderIRCampaign() {
   const container = document.getElementById('team-okr-area');
   if (!container) return;
 
-  const targetCount = 10;
+  const salesTeam = TEAM_DEF.filter(m => m.dept === 'Satış' || m.dept === 'Dijital Pazarlama');
+  const targetPerMember = 10;
+  const totalTeamTarget = salesTeam.length * targetPerMember;
+
   const wonDeals = allIRDeals.filter(d => d.stage === '5_kazanildi');
   const wonCount = wonDeals.length;
-  const targetPct = Math.min(100, Math.round((wonCount / targetCount) * 100));
+  const targetPct = Math.min(100, Math.round((wonCount / (totalTeamTarget || 10)) * 100));
 
   const totalWonRevenue = wonDeals.reduce((sum, d) => sum + (parseFloat(d.agreedPrice || d.listPrice) || 0), 0);
   const avgWonPrice = wonCount > 0 ? Math.round(totalWonRevenue / wonCount) : 0;
@@ -52,10 +55,10 @@ function renderIRCampaign() {
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
         <div>
           <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(242,79,0,0.2); border:1px solid #f24f00; color:#ffedd5; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.5rem;">
-            🚀 STRATEJİK SATIŞ KAMPANYASI
+            🚀 KİŞİ BAŞI 10 KURUM SATIŞ HEDEFİ
           </div>
-          <h2 style="font-size:1.6rem; font-weight:900; margin:0; color:#ffffff; letter-spacing:-0.02em;">Yatırımcı İlişkileri Modülü Satış Hedefi</h2>
-          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:#cbd5e1;">Ekip Hedefi: Minimum 10 Kuruma Yatırımcı İlişkileri Modülü Satışı Yapılması</p>
+          <h2 style="font-size:1.6rem; font-weight:900; margin:0; color:#ffffff; letter-spacing:-0.02em;">Yatırımcı İlişkileri Modülü Satış Kampanyası</h2>
+          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:#cbd5e1;">Bireysel Hedef: Temsilci Başı Minimum 10 Kurum · Toplam Ekip Hedefi: ${totalTeamTarget} Kurum</p>
         </div>
         <button onclick="openIRDealModal()" style="background:#f24f00; color:#ffffff; border:none; padding:0.75rem 1.4rem; border-radius:12px; font-weight:800; font-size:0.9rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(242,79,0,0.4); transition:all 0.2s;">
           <span>➕ Yeni Kurum / Fırsat Ekle</span>
@@ -65,8 +68,8 @@ function renderIRCampaign() {
       <!-- PROGRESS BAR -->
       <div style="background:rgba(255,255,255,0.12); border-radius:12px; padding:1.25rem; border:1px solid rgba(255,255,255,0.15); margin-bottom:1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-          <span style="font-size:0.85rem; font-weight:700; color:#e2e8f0;">10 KURUM KAZANIM HEDEFİ İLERLEMESİ</span>
-          <span style="font-size:1.1rem; font-weight:900; color:#10b981;">${wonCount} / ${targetCount} KURUM KAZANILDI (%${targetPct})</span>
+          <span style="font-size:0.85rem; font-weight:700; color:#e2e8f0;">GENEL EKİP KAZANIM HEDEFİ (${salesTeam.length} Temsilci × 10 Kurum = ${totalTeamTarget} Hedef)</span>
+          <span style="font-size:1.1rem; font-weight:900; color:#10b981;">${wonCount} / ${totalTeamTarget} KURUM KAZANILDI (%${targetPct})</span>
         </div>
         <div style="width:100%; height:14px; background:rgba(255,255,255,0.15); border-radius:10px; overflow:hidden; position:relative;">
           <div style="width:${targetPct}%; height:100%; background:linear-gradient(90deg, #10b981 0%, #34d399 100%); border-radius:10px; transition:width 0.6s ease-in-out;"></div>
@@ -186,29 +189,42 @@ function renderIRCampaign() {
 
     <!-- EKİP KOTASI VE PERFORMANS KARNESİ -->
     <div style="background:var(--surface); border-radius:16px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
-      <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem;">👥 Temsilci Bazlı Satış Hedef Katkısı</div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem;">👥 Temsilci Başı 10 Kurum Satış Kota Karnesi</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
         ${TEAM_DEF.filter(m => m.dept === 'Satış' || m.dept === 'Dijital Pazarlama').map(m => {
           const mDeals = allIRDeals.filter(d => d.memberId === m.id);
           const mWon = mDeals.filter(d => d.stage === '5_kazanildi');
+          const mWonCount = mWon.length;
+          const mPct = Math.min(100, Math.round((mWonCount / 10) * 100));
           const mWonVol = mWon.reduce((sum, d) => sum + (parseFloat(d.agreedPrice || d.listPrice) || 0), 0);
 
           return `
-            <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1rem;">
-              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                <div style="width:36px; height:36px; border-radius:50%; background:${m.avatarBg}; color:${m.deptColor}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem;">${m.initials}</div>
-                <div>
-                  <div style="font-weight:800; color:var(--ink); font-size:0.9rem;">${m.name}</div>
+            <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.1rem;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:${m.avatarBg}; color:${m.deptColor}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem;">${m.initials}</div>
+                <div style="flex:1;">
+                  <div style="font-weight:800; color:var(--ink); font-size:0.95rem;">${m.name}</div>
                   <div style="font-size:0.75rem; color:var(--ink2);">${m.dept}</div>
                 </div>
+                <div style="text-align:right;">
+                  <span style="font-size:0.85rem; font-weight:900; color:${mWonCount >= 10 ? '#059669' : 'var(--accent)'};">%${mPct}</span>
+                </div>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
-                <span style="color:var(--ink2);">Kazanılan Kurum:</span>
-                <strong style="color:#10b981;">${mWon.length} Kurum</strong>
+
+              <!-- BİREYSEL PROGRESS BAR -->
+              <div style="margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:var(--ink2); margin-bottom:4px;">
+                  <span>Kişisel Kota: 10 Kurum</span>
+                  <span style="color:#059669; font-weight:800;">${mWonCount} / 10 Kurum</span>
+                </div>
+                <div style="width:100%; height:8px; background:var(--border); border-radius:6px; overflow:hidden;">
+                  <div style="width:${mPct}%; height:100%; background:${mWonCount >= 10 ? '#10b981' : 'var(--accent)'}; border-radius:6px; transition:width 0.5s;"></div>
+                </div>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:4px;">
-                <span style="color:var(--ink2);">Toplam Ciro:</span>
-                <strong style="color:var(--ink);">${mWonVol.toLocaleString('tr-TR')} ₺</strong>
+
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; padding-top:8px; border-top:1px dashed var(--border);">
+                <span style="color:var(--ink2);">Kazanılan Toplam Ciro:</span>
+                <strong style="color:var(--ink); font-weight:800;">${mWonVol.toLocaleString('tr-TR')} ₺</strong>
               </div>
             </div>
           `;

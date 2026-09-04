@@ -147,6 +147,7 @@ function renderTeam() {
   if (!grid) return;
   grid.innerHTML = '';
 
+  const isAdmin = currentUser && currentUser.role === 'admin';
   const canViewAll = currentUser && (currentUser.role === 'admin' || currentUser.role === 'viewer');
 
   // Gizlilik Kuralı: Yönetici ve İzleyici TÜM ekibi görsün; temsilci sadece kendini görsün

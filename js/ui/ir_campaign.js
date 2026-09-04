@@ -33,7 +33,7 @@ function renderIRCampaign() {
   const container = document.getElementById('team-okr-area');
   if (!container) return;
 
-  const salesTeam = TEAM_DEF.filter(m => m.dept === 'Satış' || m.dept === 'Dijital Pazarlama');
+  const salesTeam = TEAM_DEF.filter(m => m.dept === 'Satış');
   const targetPerMember = 10;
   const totalTeamTarget = salesTeam.length * targetPerMember;
 
@@ -191,7 +191,7 @@ function renderIRCampaign() {
     <div style="background:var(--surface); border-radius:16px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
       <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem;">👥 Temsilci Başı 10 Kurum Satış Kota Karnesi</div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
-        ${TEAM_DEF.filter(m => m.dept === 'Satış' || m.dept === 'Dijital Pazarlama').map(m => {
+        ${TEAM_DEF.filter(m => m.dept === 'Satış').map(m => {
           const mDeals = allIRDeals.filter(d => d.memberId === m.id);
           const mWon = mDeals.filter(d => d.stage === '5_kazanildi');
           const mWonCount = mWon.length;
@@ -257,7 +257,7 @@ function openIRDealModal(dealId = null) {
             <div>
               <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--ink); margin-bottom:0.3rem;">Sorumlu Temsilci</label>
               <select id="irMemberId" style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--ink); box-sizing:border-box;">
-                ${TEAM_DEF.map(m => `<option value="${m.id}" ${existing && existing.memberId === m.id ? 'selected' : ''}>${m.name} (${m.dept})</option>`).join('')}
+                ${TEAM_DEF.filter(m => m.dept === 'Satış').map(m => `<option value="${m.id}" ${existing && existing.memberId === m.id ? 'selected' : ''}>${m.name} (${m.dept})</option>`).join('')}
               </select>
             </div>
             <div>

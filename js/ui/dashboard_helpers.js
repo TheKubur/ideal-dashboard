@@ -14,6 +14,7 @@ function changePeriod() {
   listenToProjects(currentYear);
   listenToWlRecords(currentYear);
   listenToOKR(currentPeriod);
+  if (typeof listenToIRCampaign === 'function') listenToIRCampaign();
   listenToLostSaleNotes(currentPeriod);
   if (typeof listenToProposals === 'function') listenToProposals();
   renderTeam();

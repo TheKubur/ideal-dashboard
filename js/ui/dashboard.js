@@ -318,7 +318,8 @@ function switchTeamDashboardTab(tab) {
   if (tab === 'matrix') {
     renderTeamMatrix();
   } else if (tab === 'okr') {
-    renderTeamOkrMatrix();
+    if (typeof renderIRCampaign === 'function') renderIRCampaign();
+    else renderTeamOkrMatrix();
   }
 }
 

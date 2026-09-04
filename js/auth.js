@@ -79,6 +79,7 @@ function doLogin() {
       listenToCompanyAssignments();
       listenToWlRecords(currentYear);
       listenToOKR(currentPeriod);
+      if (typeof listenToIRCampaign === 'function') listenToIRCampaign();
       listenToLostSaleNotes(currentPeriod);
       listenToNotifications();
       if (typeof listenToPrivateNotes === 'function') listenToPrivateNotes();

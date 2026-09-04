@@ -804,7 +804,8 @@ footer { text-align:center;padding:2rem 1rem;font-size:0.72rem;color:var(--ink3)
   animation: fadeUp 0.3s ease both;
 }
 
-.proposal-item-row input {
+.proposal-item-row input,
+.proposal-item-row textarea {
   margin-bottom: 0 !important;
 }
 

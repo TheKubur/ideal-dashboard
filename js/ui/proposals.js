@@ -154,8 +154,18 @@ function handlePropCompanyChange() {
   else { customInput.classList.add('hidden'); customInput.value = ''; }
 }
 
+function formatPropDesc(desc) {
+  if (!desc) return '';
+  let str = desc.trim();
+  if (str.includes('*')) {
+    const parts = str.split('*').map(s => s.trim()).filter(Boolean);
+    return parts.map(p => `• ${p}`).join('<br>');
+  }
+  return str.replace(/\n/g, '<br>');
+}
+
 /* ── ITEM ROWS ── */
-function addProposalItemRow(itemData) {
+function addProposalItemRow(itemData = null) {
   const container = document.getElementById('propItemsContainer');
   if (!container) return;
 
@@ -172,7 +182,7 @@ function addProposalItemRow(itemData) {
       <input type="text" class="modal-input prop-item-name" placeholder="Ürün / Hizmet Adı" value="${name}" required>
     </div>
     <div style="flex:2; min-width:140px;">
-      <input type="text" class="modal-input prop-item-desc" placeholder="Açıklama (Opsiyonel)" value="${desc}">
+      <textarea class="modal-input prop-item-desc" rows="2" placeholder="Açıklama (Satır satır veya * ile yazabilirsiniz)" style="resize:vertical; min-height:38px; font-family:'Outfit',sans-serif; font-size:0.85rem; padding:0.45rem 0.6rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--ink); width:100%; box-sizing:border-box;">${desc}</textarea>
     </div>
     <div style="flex:0.5; min-width:60px;">
       <input type="number" class="modal-input prop-item-qty" value="${qty}" min="1" oninput="calculateRowTotal(this)" required>
@@ -491,7 +501,7 @@ function buildAndSavePDF(data, logoDataUrl) {
       <div style="display:flex; border-bottom:${idx===data.items.length-1?'none':'1px solid #cbd5e1'}; background:${idx%2===0?'#ffffff':'#f8fafc'}; padding:12px 10px; align-items:center; min-height:45px; box-sizing:border-box;">
         <div style="flex:1; font-weight:600; text-align:left; font-size:13px; color:#0f172a; padding-right:10px;">
           <strong>${item.name}</strong>
-          ${item.desc ? `<br><span style="color:#64748b; font-size:11px; font-weight:normal">${item.desc}</span>` : ''}
+          ${item.desc ? `<br><span style="color:#64748b; font-size:11px; font-weight:normal; display:block; margin-top:3px; line-height:1.5">${formatPropDesc(item.desc)}</span>` : ''}
         </div>
         <div style="width:150px; text-align:right; font-weight:700; color:#0f172a; font-size:13px;">${Number(item.price).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</div>
       </div>
@@ -531,7 +541,7 @@ function buildAndSavePDF(data, logoDataUrl) {
     const itemsRowsHtml = data.items.map((item, idx) => `
       <tr style="border-bottom:1px solid #e2e8f0; background:${idx%2===0?'#ffffff':'#f8fafc'}">
         <td style="padding:10px 8px; font-weight:600; vertical-align:top">${idx+1}. ${item.name}</td>
-        <td style="padding:10px 8px; color:#64748b; vertical-align:top; font-size:12px">${item.desc || '—'}</td>
+        <td style="padding:10px 8px; color:#64748b; vertical-align:top; font-size:12px; line-height:1.5">${formatPropDesc(item.desc) || '—'}</td>
         <td style="padding:10px 8px; text-align:center; vertical-align:top">${item.qty}</td>
         <td style="padding:10px 8px; text-align:right; vertical-align:top">${Number(item.price).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>
         <td style="padding:10px 8px; text-align:right; vertical-align:top; font-weight:700">${Number(item.total).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺</td>

@@ -125,48 +125,78 @@ body {
   padding: 0 1.5rem;
   border-bottom: none;
   margin-bottom: 1.5rem;
-}
-
-
 .tabs {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
   width: 100%;
-  padding: 0 1rem 1rem 1rem;
+  padding: 0 0.75rem 1rem 0.75rem;
+}
+
+.nav-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+  text-transform: uppercase;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+  padding-left: 0.6rem;
+  opacity: 0.75;
+  user-select: none;
+}
+.nav-section-title:first-child {
+  margin-top: 0.25rem;
 }
 
 .tab-btn {
-  padding: 0.85rem 1.1rem;
-  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
   border: none;
+  border-left: 3px solid transparent;
   background: transparent;
   font-family: 'Outfit', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  color: rgba(255,255,255,0.6);
+  color: var(--ink3);
   text-align: left;
   width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.7rem;
+}
+
+.tab-btn .nav-icon {
+  flex-shrink: 0;
+  stroke: var(--ink3);
+  transition: stroke 0.2s ease, transform 0.2s ease;
 }
 
 .tab-btn:hover:not(.active) {
-  color: white;
-  background: rgba(255,255,255,0.06);
-  transform: translateX(4px);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(3px);
+}
+
+.tab-btn:hover:not(.active) .nav-icon {
+  stroke: var(--ink2);
+  transform: scale(1.05);
 }
 
 .tab-btn.active {
-  background: linear-gradient(90deg, rgba(230,57,70,0.15) 0%, rgba(230,57,70,0) 100%);
-  color: white;
+  background: linear-gradient(90deg, rgba(230, 57, 70, 0.16) 0%, rgba(230, 57, 70, 0.03) 100%);
+  color: #ffffff;
   font-weight: 600;
   border-left: 3px solid var(--accent);
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 8px 8px 0;
+  box-shadow: inset 1px 0 8px rgba(230, 57, 70, 0.15);
+}
+
+.tab-btn.active .nav-icon {
+  stroke: var(--accent);
 }
 
 

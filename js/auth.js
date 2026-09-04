@@ -46,12 +46,17 @@ function doLogin() {
       
       const tabAnalyticsBtn = document.getElementById('tabBtnAnalytics');
       if (tabAnalyticsBtn) {
-        tabAnalyticsBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+        tabAnalyticsBtn.style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
       }
 
       const tabPersonalTasksBtn = document.getElementById('tabBtnPersonalTasks');
       if (tabPersonalTasksBtn) {
-        tabPersonalTasksBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+        tabPersonalTasksBtn.style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
+      }
+
+      const secTitlePersonal = document.getElementById('secTitlePersonal');
+      if (secTitlePersonal) {
+        secTitlePersonal.style.display = (tabNotesBtn || tabPersonalTasksBtn) ? 'block' : 'none';
       }
 
       const matrixTabBtn = document.getElementById('btnTeamTab-matrix');

@@ -16,7 +16,20 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   const tabEl = document.getElementById('tab-' + tab);
   if (tabEl) tabEl.classList.add('active');
-  if (event && event.target) event.target.classList.add('active');
+
+  let activeBtn = null;
+  if (typeof event !== 'undefined' && event) {
+    if (event.currentTarget && event.currentTarget.classList && event.currentTarget.classList.contains('tab-btn')) {
+      activeBtn = event.currentTarget;
+    } else if (event.target) {
+      activeBtn = event.target.closest('.tab-btn');
+    }
+  }
+  if (!activeBtn) {
+    activeBtn = document.querySelector(`.tab-btn[onclick*="'${tab}'"]`) || document.querySelector(`.tab-btn[onclick*='"${tab}"']`);
+  }
+  if (activeBtn) activeBtn.classList.add('active');
+
   if (tab === 'calendar') renderCalendar();
   if (tab === 'companies') renderCompanies();
   if (tab === 'pipeline') renderPipeline();

@@ -1090,7 +1090,44 @@
 
       <!-- GEÇMİŞ KARTI -->
       <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:2rem; box-shadow:var(--shadow); position:relative; overflow:hidden;">
-        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📜 Teklif Geçmişi</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+          <div style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.08em; color:var(--ink);">📜 Teklif Geçmişi</div>
+        </div>
+
+        <!-- TEKLİF FİLTRELEME VE ARAMA ALANI -->
+        <div style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; justify-content:space-between; margin-bottom:1.25rem; background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:0.85rem 1rem;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center; flex:1; min-width:280px;">
+            <!-- Arama Kutusu -->
+            <div style="flex:1.5; min-width:200px; position:relative;">
+              <input type="text" id="propSearchInput" class="modal-input" placeholder="🔍 Kurum, Yetkili, Ürün veya Teklif No Ara..." oninput="renderProposalsList()" style="height:38px; font-size:0.82rem; padding-left:2.2rem; background:var(--surface);">
+              <span style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); opacity:0.5; pointer-events:none; font-size:0.85rem;">🔍</span>
+            </div>
+            
+            <!-- Kurum Seçimi -->
+            <select id="propFilterCompany" class="modal-select" onchange="renderProposalsList()" style="flex:1; min-width:150px; height:38px; font-size:0.82rem; background:var(--surface);">
+              <option value="all">🏢 Tüm Kurumlar</option>
+            </select>
+            
+            <!-- Hazırlayan Temsilci -->
+            <select id="propFilterMember" class="modal-select" onchange="renderProposalsList()" style="flex:1; min-width:140px; height:38px; font-size:0.82rem; background:var(--surface);">
+              <option value="all">👤 Tüm Temsilciler</option>
+            </select>
+            
+            <!-- Teklif Tipi -->
+            <select id="propFilterType" class="modal-select" onchange="renderProposalsList()" style="flex:1; min-width:150px; height:38px; font-size:0.82rem; background:var(--surface);">
+              <option value="all">📄 Tüm Şablonlar</option>
+              <option value="standard">Standart Detaylı</option>
+              <option value="itemized_no_total">Kalem Bazlı (Toplamsız)</option>
+              <option value="package">Paket Fiyatı</option>
+            </select>
+          </div>
+
+          <!-- Filtreleri Sıfırla -->
+          <button type="button" onclick="clearProposalFilters()" style="background:transparent; border:1px solid var(--border); color:var(--ink3); border-radius:8px; padding:0.45rem 0.85rem; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--ink3)'">
+            🔄 Sıfırla
+          </button>
+        </div>
+
         <div class="crm-table-wrap">
           <table class="crm-table">
             <thead>
@@ -1221,7 +1258,7 @@
   <script src="js/ui/glow.js?v=4.0"></script>
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
-  <script src="js/ui/proposals.js?v=16.6"></script>
+  <script src="js/ui/proposals.js?v=16.7"></script>
   <script src="js/ui/pdf_report_builder.js?v=4.0"></script>
 
   <!-- INIT -->

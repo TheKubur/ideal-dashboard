@@ -699,20 +699,92 @@ function buildAndSavePDF(data, logoDataUrl) {
     .catch(err => { console.error('PDF hatası:', err); wrapper.remove(); showToast('PDF oluşturulurken hata oluştu.', 'error'); });
 }
 
+/* ── POPULATE FILTERS ── */
+function populateProposalFilters() {
+  const compSel = document.getElementById('propFilterCompany');
+  const memSel = document.getElementById('propFilterMember');
+
+  if (compSel) {
+    const currentVal = compSel.value || 'all';
+    const companies = [...new Set((allProposals || []).map(p => p.company).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr'));
+    compSel.innerHTML = '<option value="all">🏢 Tüm Kurumlar</option>' +
+      companies.map(c => `<option value="${c}">${c}</option>`).join('');
+    compSel.value = companies.includes(currentVal) ? currentVal : 'all';
+  }
+
+  if (memSel && memSel.options.length <= 1) {
+    memSel.innerHTML = '<option value="all">👤 Tüm Temsilciler</option>' +
+      '<option value="admin">Hüseyin Kubur</option>' +
+      TEAM_DEF.filter(m => m.dept === 'Satış').map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  }
+}
+
+function clearProposalFilters() {
+  const searchInput = document.getElementById('propSearchInput');
+  const compSel = document.getElementById('propFilterCompany');
+  const memSel = document.getElementById('propFilterMember');
+  const typeSel = document.getElementById('propFilterType');
+
+  if (searchInput) searchInput.value = '';
+  if (compSel) compSel.value = 'all';
+  if (memSel) memSel.value = 'all';
+  if (typeSel) typeSel.value = 'all';
+
+  proposalPage = 1;
+  renderProposalsList();
+}
+window.clearProposalFilters = clearProposalFilters;
+
 /* ── RENDER LIST ── */
 function renderProposalsList() {
+  populateProposalFilters();
+
   const container = document.getElementById('proposalsHistoryList');
   const paginationContainer = document.getElementById('proposalPagination');
   if (!container) return;
 
   if (!allProposals.length) {
-    container.innerHTML = '<tr><td colspan="8" class="crm-empty">Henüz teklif kaydı bulunmuyor. 📭</td></tr>';
+    container.innerHTML = '<tr><td colspan="7" class="crm-empty">Henüz teklif kaydı bulunmuyor. 📭</td></tr>';
+    if (paginationContainer) paginationContainer.innerHTML = '';
+    return;
+  }
+
+  const searchInput = document.getElementById('propSearchInput')?.value.trim().toLowerCase() || '';
+  const filterCompany = document.getElementById('propFilterCompany')?.value || 'all';
+  const filterMember = document.getElementById('propFilterMember')?.value || 'all';
+  const filterType = document.getElementById('propFilterType')?.value || 'all';
+
+  const filteredProposals = allProposals.filter(p => {
+    if (filterCompany !== 'all' && p.company !== filterCompany) return false;
+    if (filterMember !== 'all' && p.memberId !== filterMember) return false;
+    if (filterType !== 'all' && (p.proposalType || 'standard') !== filterType) return false;
+
+    if (searchInput) {
+      const teklif_no = `ID-${p.createdAt?.substring(2,4)}${p.createdAt?.substring(5,7)}${p.createdAt?.substring(8,10)}-${p.id ? p.id.substring(0,5).toUpperCase() : 'TEMP'}`.toLowerCase();
+      const comp = (p.company || '').toLowerCase();
+      const contact = (p.contactPerson || '').toLowerCase();
+      const prep = (p.memberName || '').toLowerCase();
+      const itemsText = (p.items || []).map(i => `${i.name || ''} ${i.desc || ''}`).join(' ').toLowerCase();
+
+      const match = comp.includes(searchInput) ||
+                    contact.includes(searchInput) ||
+                    teklif_no.includes(searchInput) ||
+                    prep.includes(searchInput) ||
+                    itemsText.includes(searchInput);
+      if (!match) return false;
+    }
+
+    return true;
+  });
+
+  if (!filteredProposals.length) {
+    container.innerHTML = '<tr><td colspan="7" class="crm-empty" style="padding:2rem; text-align:center; color:var(--ink3)">🔍 Aradığınız kriterlere uygun teklif bulunamadı.</td></tr>';
     if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
 
   // Pagination bounds checking
-  const maxPage = Math.ceil(allProposals.length / proposalPageSize);
+  const maxPage = Math.ceil(filteredProposals.length / proposalPageSize);
   if (proposalPage > maxPage) {
     proposalPage = maxPage || 1;
   }
@@ -722,7 +794,7 @@ function renderProposalsList() {
 
   const startIndex = (proposalPage - 1) * proposalPageSize;
   const endIndex = startIndex + proposalPageSize;
-  const paginatedProposals = allProposals.slice(startIndex, endIndex);
+  const paginatedProposals = filteredProposals.slice(startIndex, endIndex);
 
   const fmtDate = (s) => { if (!s) return ''; const p = s.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; };
   const isAdmin  = !currentUser || currentUser.role === 'admin';
@@ -763,9 +835,9 @@ function renderProposalsList() {
 
   // Render pagination controls
   if (paginationContainer) {
-    const currentToShow = Math.min(endIndex, allProposals.length);
+    const currentToShow = Math.min(endIndex, filteredProposals.length);
     paginationContainer.innerHTML = `
-      <span>Toplam <strong>${allProposals.length}</strong> teklif arasından <strong>${startIndex + 1} - ${currentToShow}</strong> arası gösteriliyor.</span>
+      <span>Toplam <strong>${filteredProposals.length}</strong> teklif arasından <strong>${startIndex + 1} - ${currentToShow}</strong> arası gösteriliyor.</span>
       <div style="display:flex; align-items:center; gap:0.75rem">
         <button class="crm-action-btn" onclick="changeProposalPage('prev')" ${proposalPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'}>&larr; Önceki</button>
         <span style="font-weight:600; padding:0 0.25rem;">Sayfa ${proposalPage} / ${maxPage}</span>

@@ -451,6 +451,7 @@
           <button class="rep-tab" id="repTab-onetime" onclick="switchReportTab('onetime')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">Tek Seferlik Projeler</button>
           <button class="rep-tab" id="repTab-whitelabel" onclick="switchReportTab('whitelabel')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🏷️ White Label</button>
           <button class="rep-tab" id="repTab-newcompanies" onclick="switchReportTab('newcompanies')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">🆕 Yeni Eklenen Müşteriler</button>
+          <button class="rep-tab" id="repTab-cancellations" onclick="switchReportTab('cancellations')" style="padding:0.5rem 1rem; border:none; background:var(--bg); color:var(--ink2); border-radius:8px; font-weight:600; cursor:pointer;">❌ Mevcut İptaller</button>
         </div>
       </div>
 
@@ -515,6 +516,26 @@
         <div id="wl-kpi-strip" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;"></div>
         <!-- Table -->
         <div id="wl-table"></div>
+      </div>
+
+      <!-- SUB-VIEW 6: MEVCUT İPTALLER -->
+      <div id="report-view-cancellations" style="display:none; margin-top:1rem;">
+        <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+            <select id="cancelYearFilter" class="modal-select" onchange="changeCancelYear(this.value)" style="width:auto; height:38px; margin:0;"></select>
+            <select id="cancelReasonFilter" class="modal-select" onchange="renderCancellations()" style="width:auto; height:38px; margin:0;">
+              <option value="all">Tüm Nedenler</option>
+              <option>Fiyat / Bütçe</option><option>Rakibe Geçiş</option><option>Kullanım Azlığı</option><option>Memnuniyetsizlik</option><option>Şirket Kapanış / Birleşme</option><option>Teknik Sorunlar</option><option>Diğer</option>
+            </select>
+            <input id="cancelSearch" class="modal-input" placeholder="Kurum / ürün / not ara..." oninput="renderCancellations()" style="width:240px; height:38px; margin:0;">
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button onclick="exportCancellationsExcel()" style="background:#1a7a4a;color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;">📥 Excel İndir</button>
+            <button id="btnNewCancel" onclick="openCancelModal()" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:600;font-size:0.85rem;cursor:pointer;">+ İptal Ekle</button>
+          </div>
+        </div>
+        <div id="cancel-kpi-strip" style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem;"></div>
+        <div id="cancel-table"></div>
       </div>
 
       <!-- SUB-VIEW 5: YENİ EKLENEN MÜŞTERİLER -->
@@ -815,6 +836,31 @@
           <button class="modal-cancel"
             onclick="document.getElementById('assignModal').classList.add('hidden')">İptal</button>
           <button class="modal-save" id="assignSaveBtn" onclick="saveAssignments()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- İPTAL KAYDI MODAL -->
+    <div class="modal-overlay hidden" id="cancelModal">
+      <div class="modal">
+        <div class="modal-title" id="cancelModalTitle">Yeni İptal Kaydı</div>
+        <div class="modal-sub">İptal olan hizmeti ay bazlı takip için kaydet</div>
+        <label class="modal-label">Kurum</label>
+        <select class="modal-select" id="cancelCompany" onchange="handleCancelCompanyChange()"></select>
+        <input class="modal-input hidden" id="cancelCompanyCustom" placeholder="Kurum adını yaz..." style="margin-top:0.5rem">
+        <label class="modal-label">İptal Edilen Ürün / Hizmet</label>
+        <input class="modal-input" id="cancelProduct" placeholder="Örn: IR Modülü, Mobil App...">
+        <label class="modal-label">Aylık Tutar (₺)</label>
+        <input class="modal-input" type="number" min="0" step="0.01" id="cancelAmount" placeholder="0">
+        <label class="modal-label">İptal Nedeni</label>
+        <select class="modal-select" id="cancelReason"></select>
+        <label class="modal-label">İptal Tarihi (ay buna göre belirlenir)</label>
+        <input class="modal-input" type="date" id="cancelDate">
+        <label class="modal-label">Not</label>
+        <textarea class="modal-textarea" id="cancelNote" rows="3" placeholder="Detay / açıklama..."></textarea>
+        <div class="modal-btns">
+          <button class="modal-cancel" onclick="closeCancelModal()">İptal</button>
+          <button class="modal-save" id="cancelSaveBtn" onclick="saveCancellation()">Kaydet</button>
         </div>
       </div>
     </div>
@@ -1243,7 +1289,7 @@
   <script src="js/ui/whitelabel.js?v=4.0"></script>
   <script src="js/ui/companies.js?v=4.0"></script>
   <script src="js/ui/assignments.js?v=4.0"></script>
-  <script src="js/ui/projects.js?v=4.0"></script>
+  <script src="js/ui/projects.js?v=16.8"></script>
   <script src="js/ui/calendar.js?v=16.3"></script>
   <script src="js/ui/outlook.js?v=4.0"></script>
   <script src="js/ui/meeting_notes.js?v=4.0"></script>
@@ -1259,6 +1305,7 @@
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
   <script src="js/ui/proposals.js?v=16.7"></script>
+  <script src="js/ui/cancellations.js?v=16.8"></script>
   <script src="js/ui/pdf_report_builder.js?v=4.0"></script>
 
   <!-- INIT -->

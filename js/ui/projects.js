@@ -21,7 +21,7 @@ function listenToProjects(year) {
 
 function switchReportTab(tab) {
   currentReportType = tab;
-  ['kanban', 'new', 'onetime', 'whitelabel', 'analytics', 'newcompanies'].forEach(t => {
+  ['kanban', 'new', 'onetime', 'whitelabel', 'analytics', 'newcompanies', 'cancellations'].forEach(t => {
     const view = document.getElementById('report-view-' + t);
     const btn = document.getElementById('repTab-' + t);
     if (view) view.style.display = t === tab ? 'block' : 'none';
@@ -48,6 +48,7 @@ function switchReportTab(tab) {
   else if (tab === 'onetime') renderProjects('onetime');
   else if (tab === 'whitelabel') renderWhiteLabel();
   else if (tab === 'newcompanies') switchNewCompSubtab(currentNewCompSubtab);
+  else if (tab === 'cancellations' && typeof renderCancellations === 'function') renderCancellations();
 }
 
 function exportProjectsExcel() {

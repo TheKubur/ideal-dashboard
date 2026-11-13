@@ -1038,6 +1038,14 @@
                 <option value="package">Paket Fiyatı Teklifi (Birleşik Sütun)</option>
               </select>
             </div>
+            <div style="grid-column:1/-1;">
+              <label class="modal-label">Özel Başlık (opsiyonel – PDF'in üstünde ortalı görünür)</label>
+              <input type="text" class="modal-input" id="propCustomTitle" placeholder="Örn: HİZMET SÖZLEŞMESİ EKİ">
+            </div>
+            <div>
+              <label class="modal-label">Sağ Üst Not (tek kelime)</label>
+              <input type="text" class="modal-input" id="propCornerNote" maxlength="20" placeholder="Örn: TASLAK">
+            </div>
           </div>
 
           <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; margin-top:2rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📦 Ürünler / Hizmetler</div>
@@ -1094,6 +1102,11 @@
           <!-- Notlar Kartı -->
           <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
             <label class="modal-label" style="margin-top:0;">📝 Ek Notlar / Özel Şartlar</label>
+            <div style="display:flex; gap:0.3rem; margin-top:0.5rem;">
+              <button type="button" class="add-activity-btn" style="width:auto; padding:0.2rem 0.6rem; font-weight:700;" onmousedown="event.preventDefault()" onclick="propWrapSelection(this,'#propNotes','**')">B</button>
+              <button type="button" class="add-activity-btn" style="width:auto; padding:0.2rem 0.6rem; font-style:italic;" onmousedown="event.preventDefault()" onclick="propWrapSelection(this,'#propNotes','_')">I</button>
+              <button type="button" class="add-activity-btn" style="width:auto; padding:0.2rem 0.6rem; text-decoration:line-through;" onmousedown="event.preventDefault()" onclick="propWrapSelection(this,'#propNotes','~~')">S</button>
+            </div>
             <textarea class="modal-textarea" id="propNotes" placeholder="Ödeme vadesi, teslimat veya ek şartlar..." rows="4" style="margin-top:0.5rem; font-size:0.82rem;"></textarea>
           </div>
 
@@ -1304,7 +1317,7 @@
   <script src="js/ui/glow.js?v=4.0"></script>
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
-  <script src="js/ui/proposals.js?v=16.7"></script>
+  <script src="js/ui/proposals.js?v=16.9"></script>
   <script src="js/ui/cancellations.js?v=16.8"></script>
   <script src="js/ui/pdf_report_builder.js?v=4.0"></script>
 

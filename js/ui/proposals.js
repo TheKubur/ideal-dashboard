@@ -154,15 +154,51 @@ function handlePropCompanyChange() {
   else { customInput.classList.add('hidden'); customInput.value = ''; }
 }
 
+function propEscape(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// **kalın**  _italik_  ~~üstü çizili~~
+function propRichText(s) {
+  return propEscape(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/~~(.+?)~~/g, '<s>$1</s>')
+    .replace(/(^|[\s(>])_(.+?)_(?=$|[\s.,;:!?)<])/g, '$1<em>$2</em>');
+}
+
 function formatPropDesc(desc) {
   if (!desc) return '';
   let str = desc.trim();
-  if (str.includes('*')) {
-    const parts = str.split('*').map(s => s.trim()).filter(Boolean);
-    return parts.map(p => `• ${p}`).join('<br>');
+  // Tek yıldız madde işareti; ** (kalın) işaretiyle karışmasın
+  if (/(^|[^*])\*(?!\*)/.test(str)) {
+    const parts = str.split(/(?<!\*)\*(?!\*)/).map(s => s.trim()).filter(Boolean);
+    return parts.map(p => `• ${propRichText(p).replace(/\n/g, '<br>')}`).join('<br>');
   }
-  return str.replace(/\n/g, '<br>');
+  return propRichText(str).replace(/\n/g, '<br>');
 }
+
+/* ── B / I / S MINI TOOLBAR ── */
+function propFormatBar(targetSelector) {
+  const b = (m, label, style, title) =>
+    `<button type="button" title="${title}" onmousedown="event.preventDefault()" onclick="propWrapSelection(this, '${targetSelector}', '${m}')" style="${style} width:26px; height:24px; border:1px solid var(--border); background:var(--surface); color:var(--ink2); border-radius:5px; cursor:pointer; font-size:0.78rem; padding:0;">${label}</button>`;
+  return `<div style="display:flex; gap:4px; margin-bottom:4px;">
+    ${b('**', 'B', 'font-weight:800;', 'Kalın (**metin**)')}
+    ${b('_', 'I', 'font-style:italic; font-family:serif;', 'İtalik (_metin_)')}
+    ${b('~~', 'S', 'text-decoration:line-through;', 'Üstü çizili (~~metin~~)')}
+  </div>`;
+}
+
+function propWrapSelection(btn, targetSelector, marker) {
+  const scope = btn.closest('.proposal-item-row') || document;
+  const el = targetSelector.startsWith('#') ? document.querySelector(targetSelector) : scope.querySelector(targetSelector);
+  if (!el) return;
+  const start = el.selectionStart, end = el.selectionEnd;
+  const sel = el.value.slice(start, end) || 'metin';
+  el.value = el.value.slice(0, start) + marker + sel + marker + el.value.slice(end);
+  el.focus();
+  el.setSelectionRange(start + marker.length, start + marker.length + sel.length);
+}
+window.propWrapSelection = propWrapSelection;
 
 /* ── ITEM ROWS ── */
 function addProposalItemRow(itemData = null) {
@@ -182,6 +218,7 @@ function addProposalItemRow(itemData = null) {
       <input type="text" class="modal-input prop-item-name" placeholder="Ürün / Hizmet Adı" value="${name}" required>
     </div>
     <div style="flex:2; min-width:140px;">
+      ${propFormatBar('.prop-item-desc')}
       <textarea class="modal-input prop-item-desc" rows="2" placeholder="Açıklama (Satır satır veya * ile yazabilirsiniz)" style="resize:vertical; min-height:38px; font-family:'Outfit',sans-serif; font-size:0.85rem; padding:0.45rem 0.6rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--ink); width:100%; box-sizing:border-box;">${desc}</textarea>
     </div>
     <div style="flex:0.5; min-width:60px;">
@@ -279,6 +316,8 @@ function collectProposalFormData() {
   const propDate      = document.getElementById('propDate').value;
   const propValidity  = document.getElementById('propValidity').value.trim() || '30 Gün';
   const notes         = document.getElementById('propNotes').value.trim();
+  const customTitle   = (document.getElementById('propCustomTitle')?.value || '').trim();
+  const cornerNote    = (document.getElementById('propCornerNote')?.value || '').trim();
   const vatOption     = document.querySelector('input[name="propVatOption"]:checked').value;
   const footnoteType  = document.querySelector('input[name="propFootnote"]:checked')?.value || 'teknopark';
 
@@ -327,6 +366,8 @@ function collectProposalFormData() {
     vat: calculatedVat, 
     grandTotal: calculatedGrandTotal, 
     notes, 
+    customTitle,
+    cornerNote,
     footnoteType,
     proposalType: propType,
     packagePrice,
@@ -421,6 +462,8 @@ function enterEditMode(id) {
   setVal('propDate',          prop.date);
   setVal('propValidity',      prop.validity);
   setVal('propNotes',         prop.notes);
+  setVal('propCustomTitle',   prop.customTitle);
+  setVal('propCornerNote',    prop.cornerNote);
 
   // Set Proposal Type and Package values
   const typeSel = document.getElementById('propType');
@@ -611,6 +654,7 @@ function buildAndSavePDF(data, logoDataUrl) {
           </div>
         </div>
         <div style="text-align:right">
+          ${data.cornerNote ? `<div style="display:inline-block; margin-bottom:8px; padding:4px 12px; border:2px solid #e63946; color:#e63946; border-radius:6px; font-size:12px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;">${propEscape(data.cornerNote)}</div>` : ''}
           <div style="font-size:28px; font-weight:900; color:#0d1f61; letter-spacing:-0.5px; text-transform:uppercase">Fiyat Teklifi</div>
           <div style="margin-top:10px; font-size:12px; color:#475569; line-height:1.8">
             <strong>Teklif Tarihi:</strong> ${formattedDate}<br>
@@ -619,6 +663,10 @@ function buildAndSavePDF(data, logoDataUrl) {
           </div>
         </div>
       </div>
+
+      ${data.customTitle ? `
+        <div style="text-align:center; margin:-8px 0 26px; font-size:18px; font-weight:900; color:#0d1f61; text-transform:uppercase; letter-spacing:0.5px; line-height:1.4;">${propRichText(data.customTitle)}</div>
+      ` : ''}
 
       <!-- CLIENT & PREPARER -->
       <div style="display:flex; gap:0; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden; margin-bottom:30px;">
@@ -642,7 +690,7 @@ function buildAndSavePDF(data, logoDataUrl) {
       ${data.notes ? `
         <div style="border-top:1px solid #e2e8f0; padding-top:18px; margin-bottom:24px">
           <div style="font-size:10px; text-transform:uppercase; font-weight:700; color:#64748b; margin-bottom:8px; letter-spacing:0.8px">Özel Şartlar ve Ek Notlar</div>
-          <div style="font-size:12px; color:#334155; background:#fafafa; border-radius:8px; padding:12px 16px; white-space:pre-wrap; line-height:1.6; border-left:3px solid #f24f00">${data.notes}</div>
+          <div style="font-size:12px; color:#334155; background:#fafafa; border-radius:8px; padding:12px 16px; white-space:pre-wrap; line-height:1.6; border-left:3px solid #f24f00">${propRichText(data.notes)}</div>
         </div>
       ` : ''}
 

@@ -734,13 +734,13 @@ function buildAndSavePDF(data, logoDataUrl) {
           <div style="font-size:16px; font-weight:800; color:#0f172a; margin-bottom:4px">${data.company}</div>
           ${data.contactPerson ? `<div style="font-size:13px; color:#475569">Yetkili: <strong>${data.contactPerson}</strong></div>` : ''}
         </div>
-        <div style="width:1px; background:#e2e8f0"></div>
+        ${isContract ? '' : `<div style="width:1px; background:#e2e8f0"></div>
         <div style="width:220px; padding:18px 20px; text-align:right">
           <div style="font-size:10px; text-transform:uppercase; font-weight:700; color:#64748b; margin-bottom:8px; letter-spacing:0.8px">Teklifi Hazırlayan</div>
           <div style="font-size:14px; font-weight:700; color:#0f172a">${data.memberName}</div>
           <div style="font-size:11px; color:#f24f00; font-weight:600; margin-top:2px">${data.memberTitle || 'Satış Temsilcisi'}</div>
           <div style="font-size:10px; color:#94a3b8; margin-top:1px">İdeal Data</div>
-        </div>
+        </div>`}
       </div>
 
       <!-- ITEMS TABLE -->

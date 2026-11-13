@@ -998,7 +998,11 @@
     <!-- SAYFA BAŞLIĞI -->
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
       <div>
-        <div style="font-size:1.6rem; font-weight:800; background:linear-gradient(135deg,#e63946,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Fiyat Teklifi Oluşturma</div>
+        <div id="propPageTitle" style="font-size:1.6rem; font-weight:800; background:linear-gradient(135deg,#e63946,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Fiyat Teklifi Oluşturma</div>
+        <div style="display:flex; gap:0.5rem; margin-top:0.9rem;">
+          <button type="button" id="propModeBtnOffer" onclick="switchPropMode('offer')" style="padding:0.5rem 1.1rem; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--ink2); font-weight:700; font-size:0.85rem; cursor:pointer;">Fiyat Teklifi</button>
+          <button type="button" id="propModeBtnContract" onclick="switchPropMode('contract')" style="padding:0.5rem 1.1rem; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--ink2); font-weight:700; font-size:0.85rem; cursor:pointer;">Sözleşme</button>
+        </div>
       </div>
     </div>
 
@@ -1018,11 +1022,11 @@
               <label class="modal-label">Müşteri Yetkilisi</label>
               <input class="modal-input" type="text" id="propContactPerson" placeholder="Ahmet Yılmaz (Opsiyonel)">
             </div>
-            <div>
+            <div class="offer-only">
               <label class="modal-label">Teklif Tarihi</label>
               <input class="modal-input" type="date" id="propDate">
             </div>
-            <div>
+            <div class="offer-only">
               <label class="modal-label">Teklif Geçerlilik Süresi</label>
               <input class="modal-input" type="text" id="propValidity" value="30 Gün" placeholder="Örn: 30 Gün">
             </div>
@@ -1030,7 +1034,7 @@
               <label class="modal-label">Teklifi Hazırlayan</label>
               <select class="modal-select" id="propPreparedBy"></select>
             </div>
-            <div>
+            <div class="offer-only">
               <label class="modal-label">Teklif Tipi</label>
               <select class="modal-select" id="propType" onchange="handlePropTypeChange()">
                 <option value="standard">Standart Detaylı Teklif (Genel Toplamlı)</option>
@@ -1038,11 +1042,11 @@
                 <option value="package">Paket Fiyatı Teklifi (Birleşik Sütun)</option>
               </select>
             </div>
-            <div style="grid-column:1/-1;">
+            <div class="contract-only" style="grid-column:1/-1; display:none;">
               <label class="modal-label">Özel Başlık (opsiyonel – PDF'in üstünde ortalı görünür)</label>
               <input type="text" class="modal-input" id="propCustomTitle" placeholder="Örn: HİZMET SÖZLEŞMESİ EKİ">
             </div>
-            <div>
+            <div class="contract-only" style="display:none;">
               <label class="modal-label">Sağ Üst Not (tek kelime)</label>
               <input type="text" class="modal-input" id="propCornerNote" maxlength="20" placeholder="Örn: TASLAK">
             </div>
@@ -1079,7 +1083,7 @@
           </div>
 
           <!-- Özet Kartı -->
-          <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
+          <div class="offer-only" style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
             <div style="font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; color:var(--ink); margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📊 Teklif Özeti</div>
             
             <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.6rem;">
@@ -1111,7 +1115,7 @@
           </div>
 
           <!-- KDV Dipnot Seçimi -->
-          <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
+          <div class="offer-only" style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:1.5rem; box-shadow:var(--shadow);">
             <label class="modal-label" style="margin-top:0;">📌 Fiyat Dipnotu (PDF Alt Bilgi)</label>
             <p style="font-size:0.78rem; color:var(--ink3); margin:0.25rem 0 0.75rem;">PDF'in alt kısmında hangi KDV açıklaması görünsün?</p>
 
@@ -1150,7 +1154,7 @@
       <!-- GEÇMİŞ KARTI -->
       <div style="background:var(--surface); border-radius:20px; border:1px solid var(--border); padding:2rem; box-shadow:var(--shadow); position:relative; overflow:hidden;">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
-          <div style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.08em; color:var(--ink);">📜 Teklif Geçmişi</div>
+          <div id="propHistoryTitle" style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.08em; color:var(--ink);">📜 Teklif Geçmişi</div>
         </div>
 
         <!-- TEKLİF FİLTRELEME VE ARAMA ALANI -->
@@ -1173,7 +1177,7 @@
             </select>
             
             <!-- Teklif Tipi -->
-            <select id="propFilterType" class="modal-select" onchange="renderProposalsList()" style="flex:1; min-width:150px; height:38px; font-size:0.82rem; background:var(--surface);">
+            <select id="propFilterType" class="modal-select offer-only" onchange="renderProposalsList()" style="flex:1; min-width:150px; height:38px; font-size:0.82rem; background:var(--surface);">
               <option value="all">📄 Tüm Şablonlar</option>
               <option value="standard">Standart Detaylı</option>
               <option value="itemized_no_total">Kalem Bazlı (Toplamsız)</option>
@@ -1310,16 +1314,16 @@
   <script src="js/ui/lost_sale.js?v=4.0"></script>
   <script src="js/ui/weekly.js?v=16.3"></script>
   <script src="js/ui/badges.js?v=4.0"></script>
-  <script src="js/ui/charts.js?v=4.0"></script>
+  <script src="js/ui/charts.js?v=17.0"></script>
   <script src="js/ui/analytics.js?v=16.3"></script>
   <script src="js/ui/okr.js?v=4.0"></script>
   <script src="js/ui/ir_campaign.js?v=4.0"></script>
   <script src="js/ui/glow.js?v=4.0"></script>
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
-  <script src="js/ui/proposals.js?v=16.9"></script>
+  <script src="js/ui/proposals.js?v=17.0"></script>
   <script src="js/ui/cancellations.js?v=16.8"></script>
-  <script src="js/ui/pdf_report_builder.js?v=4.0"></script>
+  <script src="js/ui/pdf_report_builder.js?v=17.0"></script>
 
   <!-- INIT -->
   <script src="js/main.js?v=4.0"></script>

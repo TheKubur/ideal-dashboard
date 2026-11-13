@@ -22,7 +22,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const projectsList = (typeof allProjects !== 'undefined') ? allProjects : [];
   const activitiesList = (typeof allActivities !== 'undefined') ? allActivities : [];
   const wlList = (typeof allWhiteLabel !== 'undefined') ? allWhiteLabel : [];
-  const proposalsList = (typeof allProposals !== 'undefined') ? allProposals : [];
+  const proposalsList = (typeof allProposals !== 'undefined') ? allProposals.filter(p => p.docMode !== 'contract') : [];
 
   const currentMonthProjects = projectsList.filter(p => normalizeMonth(p.month) === activeMonthNorm);
   const newProjects = currentMonthProjects.filter(p => p.type === 'new');

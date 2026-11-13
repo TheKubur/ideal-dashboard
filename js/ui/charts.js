@@ -83,7 +83,7 @@ function renderBarChart() {
   const actsList = (typeof allActivities !== 'undefined' && Array.isArray(allActivities)) ? allActivities : [];
   const projsList = (typeof allProjects !== 'undefined' && Array.isArray(allProjects)) ? allProjects : [];
   const wlList = (typeof allWlRecords !== 'undefined' && Array.isArray(allWlRecords)) ? allWlRecords : ((typeof allWhiteLabel !== 'undefined' && Array.isArray(allWhiteLabel)) ? allWhiteLabel : []);
-  const propList = (typeof allProposals !== 'undefined' && Array.isArray(allProposals)) ? allProposals : [];
+  const propList = (typeof allProposals !== 'undefined' && Array.isArray(allProposals)) ? allProposals.filter(p => p.docMode !== 'contract') : [];
 
   // Calculate monthly total volume (Activities + Projects + Proposals + WL)
   const monthlyCounts = MONTH_NAMES.map((mName, idx) => {

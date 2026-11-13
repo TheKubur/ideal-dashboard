@@ -2,6 +2,7 @@ let allProposals = [];
 let editingProposalId = null;
 let proposalPage = 1;
 const proposalPageSize = 10;
+let propMode = 'offer'; // 'offer' (Fiyat Teklifi) | 'contract' (Sözleşme)
 
 /* ── TITLE MAP ── */
 function getMemberTitle(memberId) {
@@ -57,12 +58,13 @@ function initProposalsPage() {
   // Cancel edit mode if re-entering page
   editingProposalId = null;
   const btn = document.getElementById('saveProposalBtn');
-  if (btn) { btn.textContent = 'Teklif Oluştur ve PDF İndir'; btn.disabled = false; }
+  if (btn) { btn.textContent = propSaveLabel(); btn.disabled = false; }
   const cancelBtn = document.getElementById('cancelEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
   const editBanner = document.getElementById('editModeBanner');
   if (editBanner) editBanner.style.display = 'none';
 
+  propMode = 'offer';
   resetProposalForm();
   populatePreparedBy();
   renderProposalsList();
@@ -125,7 +127,59 @@ function resetProposalForm() {
   // Reset footnote selection to first option
   const firstFootnote = document.querySelector('input[name="propFootnote"][value="teknopark"]');
   if (firstFootnote) { firstFootnote.checked = true; selectProposalFootnote('teknopark'); }
+
+  applyPropMode(propMode);
 }
+
+/* ── MODE: FİYAT TEKLİFİ / SÖZLEŞME ── */
+function propSaveLabel() {
+  return propMode === 'contract' ? 'Sözleşme Oluştur ve PDF İndir' : 'Teklif Oluştur ve PDF İndir';
+}
+
+function applyPropMode(mode) {
+  const prev = propMode;
+  propMode = mode === 'contract' ? 'contract' : 'offer';
+  const isContract = propMode === 'contract';
+
+  document.querySelectorAll('#tab-teklif .offer-only').forEach(el => { el.style.display = isContract ? 'none' : ''; });
+  document.querySelectorAll('#tab-teklif .contract-only').forEach(el => { el.style.display = isContract ? '' : 'none'; });
+
+  const typeSel = document.getElementById('propType');
+  if (typeSel) {
+    if (isContract) typeSel.value = 'itemized_no_total';
+    else if (prev === 'contract') typeSel.value = 'standard';
+  }
+  handlePropTypeChange();
+  if (isContract) { const card = document.getElementById('packageSettingsCard'); if (card) card.style.display = 'none'; }
+
+  const setBtn = (id, active) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.style.background = active ? 'linear-gradient(135deg,#e63946,#8b5cf6)' : 'var(--surface)';
+    b.style.color = active ? '#fff' : 'var(--ink2)';
+    b.style.borderColor = active ? 'transparent' : 'var(--border)';
+  };
+  setBtn('propModeBtnOffer', !isContract);
+  setBtn('propModeBtnContract', isContract);
+
+  const t = document.getElementById('propPageTitle');
+  if (t) t.textContent = isContract ? 'Sözleşme Oluşturma' : 'Fiyat Teklifi Oluşturma';
+  const h = document.getElementById('propHistoryTitle');
+  if (h) h.textContent = isContract ? '📜 Sözleşme Geçmişi' : '📜 Teklif Geçmişi';
+  const btn = document.getElementById('saveProposalBtn');
+  if (btn && !editingProposalId) btn.textContent = propSaveLabel();
+}
+
+function switchPropMode(mode) {
+  if (mode === propMode) return;
+  if (editingProposalId) cancelEditMode();
+  applyPropMode(mode);
+  resetProposalForm();
+  populatePreparedBy();
+  proposalPage = 1;
+  renderProposalsList();
+}
+window.switchPropMode = switchPropMode;
 
 /* ── FOOTNOTE SELECTOR ── */
 function selectProposalFootnote(value) {
@@ -316,8 +370,8 @@ function collectProposalFormData() {
   const propDate      = document.getElementById('propDate').value;
   const propValidity  = document.getElementById('propValidity').value.trim() || '30 Gün';
   const notes         = document.getElementById('propNotes').value.trim();
-  const customTitle   = (document.getElementById('propCustomTitle')?.value || '').trim();
-  const cornerNote    = (document.getElementById('propCornerNote')?.value || '').trim();
+  const customTitle   = propMode === 'contract' ? (document.getElementById('propCustomTitle')?.value || '').trim() : '';
+  const cornerNote    = propMode === 'contract' ? (document.getElementById('propCornerNote')?.value || '').trim() : '';
   const vatOption     = document.querySelector('input[name="propVatOption"]:checked').value;
   const footnoteType  = document.querySelector('input[name="propFootnote"]:checked')?.value || 'teknopark';
 
@@ -338,7 +392,7 @@ function collectProposalFormData() {
     items.push({ name, desc, qty, price, total });
   }
 
-  const propType = document.getElementById('propType')?.value || 'standard';
+  const propType = propMode === 'contract' ? 'itemized_no_total' : (document.getElementById('propType')?.value || 'standard');
   const packagePrice = propType === 'package' ? (parseFloat(document.getElementById('propPackagePrice')?.value) || 0) : 0;
   const packageTitle = propType === 'package' ? (document.getElementById('propPackageTitle')?.value || 'PAKET FİYATI') : '';
   const packageNote = propType === 'package' ? (document.getElementById('propPackageNote')?.value || '') : '';
@@ -370,6 +424,7 @@ function collectProposalFormData() {
     cornerNote,
     footnoteType,
     proposalType: propType,
+    docMode: propMode,
     packagePrice,
     packageTitle,
     packageNote,
@@ -404,7 +459,7 @@ function saveAndDownloadProposal() {
       cancelEditMode();
     })
     .catch(err => showToast('Güncelleme hatası: ' + err.message, 'error'))
-    .finally(() => { btn.textContent = 'Teklif Oluştur ve PDF İndir'; btn.disabled = false; });
+    .finally(() => { btn.textContent = propSaveLabel(); btn.disabled = false; });
   } else {
     // CREATE new
     const proposalData = { ...formData, createdAt: new Date().toISOString() };
@@ -417,7 +472,7 @@ function saveAndDownloadProposal() {
       populatePreparedBy();
     })
     .catch(err => showToast('Teklif kaydedilirken hata oluştu: ' + err.message, 'error'))
-    .finally(() => { btn.textContent = 'Teklif Oluştur ve PDF İndir'; btn.disabled = false; });
+    .finally(() => { btn.textContent = propSaveLabel(); btn.disabled = false; });
   }
 }
 
@@ -428,6 +483,9 @@ function enterEditMode(id) {
   if (!prop) { showToast('Teklif bulunamadı!', 'error'); return; }
 
   editingProposalId = id;
+  applyPropMode(prop.docMode === 'contract' ? 'contract' : 'offer');
+  proposalPage = 1;
+  renderProposalsList();
 
   // Scroll to form
   document.getElementById('proposalForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -441,7 +499,7 @@ function enterEditMode(id) {
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
 
   const btn = document.getElementById('saveProposalBtn');
-  if (btn) btn.textContent = '✏️ Teklifi Güncelle ve PDF İndir';
+  if (btn) btn.textContent = propMode === 'contract' ? '✏️ Sözleşmeyi Güncelle ve PDF İndir' : '✏️ Teklifi Güncelle ve PDF İndir';
 
   // Fill company
   const compSel = document.getElementById('propCompany');
@@ -504,7 +562,7 @@ function enterEditMode(id) {
 function cancelEditMode() {
   editingProposalId = null;
   const btn = document.getElementById('saveProposalBtn');
-  if (btn) { btn.textContent = 'Teklif Oluştur ve PDF İndir'; btn.disabled = false; }
+  if (btn) { btn.textContent = propSaveLabel(); btn.disabled = false; }
   const cancelBtn = document.getElementById('cancelEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
   const editBanner = document.getElementById('editModeBanner');
@@ -542,6 +600,7 @@ function buildAndSavePDF(data, logoDataUrl) {
   const teklif_no = `ID-${data.createdAt.substring(2,4)}${data.createdAt.substring(5,7)}${data.createdAt.substring(8,10)}-${data.id ? data.id.substring(0,5).toUpperCase() : 'TEMP'}`;
 
   // Check proposal type
+  const isContract = data.docMode === 'contract';
   const isPackage = data.proposalType === 'package';
   const isItemizedNoTotal = data.proposalType === 'itemized_no_total';
 
@@ -655,12 +714,12 @@ function buildAndSavePDF(data, logoDataUrl) {
         </div>
         <div style="text-align:right">
           ${data.cornerNote ? `<div style="display:inline-block; margin-bottom:8px; padding:4px 12px; border:2px solid #e63946; color:#e63946; border-radius:6px; font-size:12px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;">${propEscape(data.cornerNote)}</div>` : ''}
-          <div style="font-size:28px; font-weight:900; color:#0d1f61; letter-spacing:-0.5px; text-transform:uppercase">Fiyat Teklifi</div>
+          ${isContract ? '' : `<div style="font-size:28px; font-weight:900; color:#0d1f61; letter-spacing:-0.5px; text-transform:uppercase">Fiyat Teklifi</div>
           <div style="margin-top:10px; font-size:12px; color:#475569; line-height:1.8">
             <strong>Teklif Tarihi:</strong> ${formattedDate}<br>
             <strong>Geçerlilik:</strong> ${data.validity}<br>
             <strong>Teklif No:</strong> <span style="font-family:monospace; font-weight:700; color:#0d1f61">${teklif_no}</span>
-          </div>
+          </div>`}
         </div>
       </div>
 
@@ -694,7 +753,7 @@ function buildAndSavePDF(data, logoDataUrl) {
         </div>
       ` : ''}
 
-      <!-- FOOTNOTES -->
+      ${isContract ? '' : `<!-- FOOTNOTES -->
       <div style="margin-top:20px; border-top:2px solid #e2e8f0; padding-top:16px; margin-bottom:20px">
         <div style="font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px">Koşullar ve Açıklamalar</div>
         <div style="display:flex; flex-direction:column; gap:6px">
@@ -721,7 +780,7 @@ function buildAndSavePDF(data, logoDataUrl) {
       <div style="border-top:1px solid #e2e8f0; padding-top:16px; text-align:center; font-size:11px; color:#94a3b8">
         <div style="font-weight:700; color:#475569; margin-bottom:4px; font-size:12px">Bizi tercih ettiğiniz için teşekkür ederiz.</div>
         <div>Bu fiyat teklifi İdeal Data Finansal Teknolojiler A.Ş. tarafından hazırlanmıştır.</div>
-      </div>
+      </div>`}
     </div>
   `;
 
@@ -732,7 +791,7 @@ function buildAndSavePDF(data, logoDataUrl) {
   document.body.appendChild(wrapper);
 
   const target = wrapper.firstElementChild;
-  const filename = `Teklif_${data.company.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ\s]/g,'').replace(/\s+/g,'_')}_${data.date}.pdf`;
+  const filename = `${isContract ? 'Sozlesme' : 'Teklif'}_${data.company.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ\s]/g,'').replace(/\s+/g,'_')}_${data.date}.pdf`;
 
   const opt = {
     margin:      8,
@@ -803,6 +862,7 @@ function renderProposalsList() {
   const filterType = document.getElementById('propFilterType')?.value || 'all';
 
   const filteredProposals = allProposals.filter(p => {
+    if ((p.docMode || 'offer') !== propMode) return false;
     if (filterCompany !== 'all' && p.company !== filterCompany) return false;
     if (filterMember !== 'all' && p.memberId !== filterMember) return false;
     if (filterType !== 'all' && (p.proposalType || 'standard') !== filterType) return false;

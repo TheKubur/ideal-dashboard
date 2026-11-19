@@ -34,6 +34,7 @@ function switchTab(tab) {
   if (tab === 'companies') renderCompanies();
   if (tab === 'pipeline') renderPipeline();
   if (tab === 'personaltasks') renderPersonalTasks();
+  if (tab === 'fiyat' && typeof renderPriceBook === 'function') renderPriceBook();
   if (tab === 'teklif') {
     if (typeof initProposalsPage === 'function') initProposalsPage();
   }

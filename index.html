@@ -176,6 +176,10 @@
           <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
           <span>Teklif Yönetimi</span>
         </button>
+        <button class="tab-btn" id="tabBtnPriceBook" onclick="switchTab('fiyat')">
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span>Fiyat &amp; Zam</span>
+        </button>
         <button class="tab-btn" id="tabBtnAnalytics" style="display:none" onclick="switchTab('analytics')">
           <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <span>Verimlilik</span>
@@ -994,6 +998,8 @@
 
   <div class="tab-content" id="tab-personaltasks"></div>
 
+  <div class="tab-content" id="tab-fiyat"><div id="pb-root"></div></div>
+
   <div class="tab-content" id="tab-teklif">
     <!-- SAYFA BAŞLIĞI -->
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
@@ -1307,7 +1313,7 @@
   <script src="js/ui/companies.js?v=4.0"></script>
   <script src="js/ui/assignments.js?v=4.0"></script>
   <script src="js/ui/projects.js?v=16.8"></script>
-  <script src="js/ui/calendar.js?v=16.3"></script>
+  <script src="js/ui/calendar.js?v=17.2"></script>
   <script src="js/ui/outlook.js?v=4.0"></script>
   <script src="js/ui/meeting_notes.js?v=4.0"></script>
   <script src="js/ui/private_notes.js?v=4.0"></script>
@@ -1323,6 +1329,8 @@
   <script src="js/ideal_data_logo.js?v=4.0"></script>
   <script src="js/ui/proposals.js?v=17.1"></script>
   <script src="js/ui/cancellations.js?v=16.8"></script>
+  <script src="js/data/price_seed.js?v=1.0"></script>
+  <script src="js/ui/pricebook.js?v=1.0"></script>
   <script src="js/ui/pdf_report_builder.js?v=17.0"></script>
 
   <!-- INIT -->

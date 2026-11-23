@@ -559,6 +559,33 @@ function enterEditMode(id) {
   calculateProposalGrandTotal();
 }
 
+/* ── YİNELE: eski teklifi başka kurum için yeni teklif olarak kopyala ── */
+function duplicateProposal(id) {
+  enterEditMode(id);
+  // Düzenleme değil, yeni kayıt olacak
+  editingProposalId = null;
+  const banner = document.getElementById('editModeBanner');
+  if (banner) banner.style.display = 'none';
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  const btn = document.getElementById('saveProposalBtn');
+  if (btn) { btn.textContent = propSaveLabel(); btn.disabled = false; }
+
+  // Kuruma özel alanları temizle, tarihi güncelle
+  const compSel = document.getElementById('propCompany');
+  if (compSel) compSel.value = '';
+  const custom = document.getElementById('propCompanyCustom');
+  if (custom) { custom.classList.add('hidden'); custom.value = ''; }
+  const contact = document.getElementById('propContactPerson');
+  if (contact) contact.value = '';
+  const dateInput = document.getElementById('propDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  showToast('Teklif kopyalandı. Şimdi yeni kurumu seçip kaydet.', 'success');
+  if (compSel) compSel.focus();
+}
+window.duplicateProposal = duplicateProposal;
+
 function cancelEditMode() {
   editingProposalId = null;
   const btn = document.getElementById('saveProposalBtn');
@@ -917,6 +944,9 @@ function renderProposalsList() {
     const delBtn = isAdmin
       ? `<button class="crm-action-btn" data-prop-id="${p.id}" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="event.stopPropagation(); deleteProposal(this.getAttribute('data-prop-id'))">🗑️ Sil</button>`
       : '';
+    const copyBtn = canEdit(p)
+      ? `<button class="crm-action-btn" data-prop-id="${p.id}" title="Bu teklifi yeni bir kurum için kopyala" style="background:var(--surface); border:1px solid var(--border); color:var(--ink2); padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; cursor:pointer; margin-right:4px" onclick="event.stopPropagation(); duplicateProposal(this.getAttribute('data-prop-id'))">📋 Yinele</button>`
+      : '';
     const priceDisplay = p.proposalType === 'itemized_no_total'
       ? `${Number(p.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺ <span style="font-size:0.65rem; font-weight:600; color:var(--ink3); display:block;">(Kalem Bazlı / Toplamsız)</span>`
       : `${Number(p.grandTotal).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺`;
@@ -934,7 +964,7 @@ function renderProposalsList() {
           </div>
         </td>
         <td style="text-align:right; white-space:nowrap">
-          ${editBtn}${delBtn}
+          ${editBtn}${copyBtn}${delBtn}
           <button class="modal-save" style="padding:0.3rem 0.6rem; font-size:0.75rem" onclick="reDownloadProposal('${p.id}')">📥 PDF</button>
         </td>
       </tr>

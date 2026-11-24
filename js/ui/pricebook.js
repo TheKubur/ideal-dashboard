@@ -215,6 +215,7 @@ function pbRenderCorp(list, canEdit, isAdmin) {
           ${k.note ? `<div style="margin-top:0.8rem; font-size:0.82rem; color:var(--ink2); background:var(--bg); border-left:3px solid #f59e0b; padding:0.6rem 0.9rem; border-radius:8px; white-space:pre-wrap;">${pbEsc(k.note)}</div>` : ''}
           <div style="margin-top:0.9rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
             ${canEdit ? `<button class="crm-action-btn" style="cursor:pointer; padding:0.35rem 0.8rem;" onclick="pbOpenModal('${k.id}')">Düzenle</button>` : ''}
+            <button class="crm-action-btn" style="cursor:pointer; padding:0.35rem 0.8rem;" onclick="pbLetterPDF('${k.id}')">📄 Zam Mektubu PDF</button>
             ${isAdmin ? `<button class="crm-action-btn" style="cursor:pointer; padding:0.35rem 0.8rem; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;" onclick="pbDelete('${k.id}')">Sil</button>` : ''}
           </div>
         </div>`;
@@ -522,6 +523,68 @@ function pbBulkRate() {
     .then(() => showToast(`%${r} zam ${list.length} kuruma uygulandı.`, 'success'))
     .catch(e => showToast('Hata: ' + e.message, 'error'));
 }
+
+/* ── ZAM MEKTUBU (PDF) ── */
+function pbLetterPDF(id) {
+  const k = allPriceBook.find(x => x.id === id);
+  if (!k) return;
+  const rows = [];
+  if (k.pro && k.pro.p2027 != null) rows.push({ name: 'PRO (kullanıcı / ay)', a: k.pro.p2026, b: k.pro.p2027 });
+  if (k.cep && k.cep.p2027 != null) rows.push({ name: 'CEP (kullanıcı / ay)', a: k.cep.p2026, b: k.cep.p2027 });
+  (k.items || []).filter(i => i.p2027 != null).forEach(i => rows.push({ name: i.name, a: i.p2026, b: i.p2027 }));
+  if (!rows.length) { showToast('Bu kurum için 2027 fiyatı yok.', 'warning'); return; }
+
+  const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const now = new Date();
+  const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  const money = n => (n == null ? '—' : Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺');
+  const logo = (typeof IDEAL_DATA_LOGO_B64 !== 'undefined')
+    ? `<img src="${IDEAL_DATA_LOGO_B64}" style="height:48px; object-fit:contain; display:block">`
+    : `<div style="font-size:22px; font-weight:900; color:#0d1f61">İdeal Data</div>`;
+
+  const tr = rows.map((r, i) => `
+    <tr style="background:${i % 2 ? '#f8fafc' : '#fff'}; border-bottom:1px solid #e2e8f0;">
+      <td style="padding:9px 8px; font-weight:600;">${pbEsc(r.name)}</td>
+      <td style="padding:9px 8px; text-align:right;">${money(r.a)}</td>
+      <td style="padding:9px 8px; text-align:right; font-weight:800; color:#0d1f61;">${money(r.b)}</td>
+    </tr>`).join('');
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif; color:#0f172a; background:#fff; padding:40px; width:750px; font-size:13px; line-height:1.7; box-sizing:border-box;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #f24f00; padding-bottom:20px; margin-bottom:28px;">
+        <div>${logo}
+          <div style="font-size:11px; color:#64748b; margin-top:8px; line-height:1.6">İdeal Data Finansal Teknolojiler A.Ş.<br>Barbaros Mah. Ihlamur Bulvarı No:3, Ağaoğlu My Newwork,<br>14. Kat, No:149, 34746 Ataşehir / İstanbul<br>www.idealdata.com.tr • bilgi@idealdata.com.tr • +90 212 385 35 35</div>
+        </div>
+        <div style="text-align:right; font-size:12px; color:#475569;">${dateStr}</div>
+      </div>
+      <div style="font-size:15px; font-weight:800; margin-bottom:6px;">${pbEsc(k.name)}</div>
+      <div style="font-weight:700; color:#0d1f61; margin-bottom:18px;">Konu: 2027 Yılı Fiyat Güncellemesi</div>
+      <p>Sayın Yetkili,</p>
+      <p>Hizmetlerimizi kesintisiz ve kaliteli biçimde sürdürmeye devam etmekteyiz. Artış gösteren işletme maliyetleri nedeniyle, <strong>1 Ocak 2027</strong> tarihinden itibaren geçerli olmak üzere hizmet bedellerimizde aşağıdaki güncelleme yapılacaktır.</p>
+      <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+        <thead><tr style="background:#0d1f61; color:#fff;">
+          <th style="padding:10px 8px; text-align:left; font-size:12px;">Hizmet / Ürün</th>
+          <th style="padding:10px 8px; text-align:right; font-size:12px; width:130px;">2026</th>
+          <th style="padding:10px 8px; text-align:right; font-size:12px; width:130px;">2027</th>
+        </tr></thead>
+        <tbody>${tr}</tbody>
+      </table>
+      <p>Konuyla ilgili görüş ve sorularınız için bizimle iletişime geçebilirsiniz. Anlayışınız için teşekkür eder, iş birliğimizin devamını dileriz.</p>
+      <p style="margin-top:28px;">Saygılarımızla,<br><strong>İdeal Data Finansal Teknolojiler A.Ş.</strong></p>
+    </div>`;
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:absolute; left:-9999px; top:0; background:#fff';
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap);
+  const fname = `Zam_Mektubu_${k.name.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ\s]/g, '').replace(/\s+/g, '_')}_2027.pdf`;
+  html2pdf().from(wrap.firstElementChild).set({
+    margin: 8, filename: fname, image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).save().then(() => wrap.remove()).catch(() => { wrap.remove(); showToast('PDF oluşturulamadı.', 'error'); });
+}
+window.pbLetterPDF = pbLetterPDF;
 
 /* ── EXCEL'E AKTAR ── */
 function pbExportExcel() {

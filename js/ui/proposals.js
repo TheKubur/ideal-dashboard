@@ -598,6 +598,50 @@ function duplicateProposal(id) {
 }
 window.duplicateProposal = duplicateProposal;
 
+/* ── TEKLİF DURUMU & TAKİP HATIRLATMASI ── */
+const PROP_STATUSES = ['Gönderildi', 'Kabul Edildi', 'Reddedildi', 'Beklemede'];
+const PROP_STATUS_COLORS = { 'Gönderildi': '#457b9d', 'Kabul Edildi': '#16a34a', 'Reddedildi': '#e63946', 'Beklemede': '#f59e0b' };
+
+function propFollowUpInfo(p) {
+  if ((p.docMode || 'offer') === 'contract') return null;
+  if ((p.status || 'Gönderildi') !== 'Gönderildi') return null;
+  const base = new Date(p.date || p.createdAt);
+  if (isNaN(base)) return null;
+  const days = Math.floor((Date.now() - base.getTime()) / 86400000);
+  const validity = parseInt(p.validity, 10) || 30;
+  if (days > validity) return { text: '⏰ Süresi doldu (' + days + ' gün)', color: '#e63946' };
+  if (days >= 7) return { text: '🔔 Takip et (' + days + ' gün)', color: '#f59e0b' };
+  return null;
+}
+
+function propStatusCell(p, editable) {
+  if ((p.docMode || 'offer') === 'contract') return '<span style="color:var(--ink3)">—</span>';
+  const st = p.status || 'Gönderildi';
+  const color = PROP_STATUS_COLORS[st] || '#94a3b8';
+  const fu = propFollowUpInfo(p);
+  const ctl = editable
+    ? `<select class="modal-select" onclick="event.stopPropagation()" onchange="setProposalStatus('${p.id}', this.value)" style="width:auto; margin:0; height:30px; font-size:0.75rem; padding:0 0.4rem; color:${color}; font-weight:700;">${PROP_STATUSES.map(s => `<option ${s === st ? 'selected' : ''}>${s}</option>`).join('')}</select>`
+    : `<span style="font-size:0.75rem; font-weight:700; color:${color};">${st}</span>`;
+  return ctl + (fu ? `<div style="font-size:0.68rem; font-weight:700; color:${fu.color}; margin-top:0.25rem; white-space:nowrap;">${fu.text}</div>` : '');
+}
+
+function setProposalStatus(id, status) {
+  db.collection('proposals').doc(id).update({ status, statusUpdatedAt: new Date().toISOString() })
+    .then(() => showToast('Durum güncellendi: ' + status, 'success'))
+    .catch(e => showToast('Hata: ' + e.message, 'error'));
+}
+window.setProposalStatus = setProposalStatus;
+
+function renderFollowUpBanner() {
+  const el = document.getElementById('propFollowUpBanner');
+  if (!el) return;
+  const due = (allProposals || []).filter(p => propFollowUpInfo(p));
+  if (propMode === 'contract' || !due.length) { el.style.display = 'none'; return; }
+  const expired = due.filter(p => propFollowUpInfo(p).color === '#e63946').length;
+  el.style.display = 'block';
+  el.innerHTML = `🔔 <strong>${due.length}</strong> teklif cevap bekliyor${expired ? ` (<strong>${expired}</strong> tanesinin geçerlilik süresi doldu)` : ''}. Durumunu güncelle veya müşteriyi ara.`;
+}
+
 function cancelEditMode() {
   editingProposalId = null;
   const btn = document.getElementById('saveProposalBtn');
@@ -883,6 +927,7 @@ window.clearProposalFilters = clearProposalFilters;
 
 /* ── RENDER LIST ── */
 function renderProposalsList() {
+  renderFollowUpBanner();
   populateProposalFilters();
 
   const container = document.getElementById('proposalsHistoryList');
@@ -890,7 +935,7 @@ function renderProposalsList() {
   if (!container) return;
 
   if (!allProposals.length) {
-    container.innerHTML = '<tr><td colspan="7" class="crm-empty">Henüz teklif kaydı bulunmuyor. 📭</td></tr>';
+    container.innerHTML = '<tr><td colspan="8" class="crm-empty">Henüz kayıt bulunmuyor. 📭</td></tr>';
     if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
@@ -925,7 +970,7 @@ function renderProposalsList() {
   });
 
   if (!filteredProposals.length) {
-    container.innerHTML = '<tr><td colspan="7" class="crm-empty" style="padding:2rem; text-align:center; color:var(--ink3)">🔍 Aradığınız kriterlere uygun teklif bulunamadı.</td></tr>';
+    container.innerHTML = '<tr><td colspan="8" class="crm-empty" style="padding:2rem; text-align:center; color:var(--ink3)">🔍 Aradığınız kriterlere uygun kayıt bulunamadı.</td></tr>';
     if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
@@ -975,6 +1020,7 @@ function renderProposalsList() {
             ${p.memberName}
           </div>
         </td>
+        <td>${propStatusCell(p, canEdit(p))}</td>
         <td style="text-align:right; white-space:nowrap">
           ${editBtn}${copyBtn}${delBtn}
           <button class="modal-save" style="padding:0.3rem 0.6rem; font-size:0.75rem" onclick="reDownloadProposal('${p.id}')">📥 PDF</button>

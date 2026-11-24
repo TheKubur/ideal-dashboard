@@ -527,6 +527,10 @@
         <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center; justify-content:space-between; margin-bottom:1rem;">
           <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
             <select id="cancelYearFilter" class="modal-select" onchange="changeCancelYear(this.value)" style="width:auto; height:38px; margin:0;"></select>
+            <select id="cancelMonthFilter" class="modal-select" onchange="renderCancellations()" style="width:auto; height:38px; margin:0;">
+              <option value="all">Tüm Aylar</option>
+              <option>OCAK</option><option>ŞUBAT</option><option>MART</option><option>NİSAN</option><option>MAYIS</option><option>HAZİRAN</option><option>TEMMUZ</option><option>AĞUSTOS</option><option>EYLÜL</option><option>EKİM</option><option>KASIM</option><option>ARALIK</option>
+            </select>
             <select id="cancelReasonFilter" class="modal-select" onchange="renderCancellations()" style="width:auto; height:38px; margin:0;">
               <option value="all">Tüm Nedenler</option>
               <option>Fiyat / Bütçe</option><option>Rakibe Geçiş</option><option>Kullanım Azlığı</option><option>Memnuniyetsizlik</option><option>Şirket Kapanış / Birleşme</option><option>Teknik Sorunlar</option><option>Diğer</option>
@@ -1327,8 +1331,8 @@
   <script src="js/ui/glow.js?v=4.0"></script>
   <script src="js/ui/chatbot.js?v=4.0"></script>
   <script src="js/ideal_data_logo.js?v=4.0"></script>
-  <script src="js/ui/proposals.js?v=17.3"></script>
-  <script src="js/ui/cancellations.js?v=16.8"></script>
+  <script src="js/ui/proposals.js?v=17.4"></script>
+  <script src="js/ui/cancellations.js?v=17.4"></script>
   <script src="js/data/price_seed.js?v=1.0"></script>
   <script src="js/ui/pricebook.js?v=1.0"></script>
   <script src="js/ui/pdf_report_builder.js?v=17.0"></script>

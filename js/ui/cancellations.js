@@ -28,9 +28,11 @@ function listenToCancellations() {
 function getFilteredCancellations() {
   const search = (document.getElementById('cancelSearch')?.value || '').trim().toLowerCase();
   const reason = document.getElementById('cancelReasonFilter')?.value || 'all';
+  const month = document.getElementById('cancelMonthFilter')?.value || 'all';
   return allCancellations.filter(c => {
     if (String(c.year) !== cancelYearFilter) return false;
     if (reason !== 'all' && c.reason !== reason) return false;
+    if (month !== 'all' && c.month !== month) return false;
     if (search) {
       const hay = `${c.company || ''} ${c.product || ''} ${c.note || ''} ${c.memberName || ''}`.toLowerCase();
       if (!hay.includes(search)) return false;

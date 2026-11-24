@@ -283,12 +283,24 @@ function addProposalItemRow(itemData = null) {
     </div>
     <div style="flex:1; min-width:110px; display:flex; align-items:center; justify-content:space-between; padding-left:0.5rem;">
       <span class="prop-item-total" style="font-weight:700; color:var(--ink2);">${itemData ? (itemData.total || 0).toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ₺' : '0.00 ₺'}</span>
+      <button type="button" title="Yukarı taşı" class="modal-cancel" style="padding:0.3rem 0.5rem; border-radius:6px; cursor:pointer;" onclick="moveProposalItemRow(this,-1)">▲</button>
+      <button type="button" title="Aşağı taşı" class="modal-cancel" style="padding:0.3rem 0.5rem; border-radius:6px; cursor:pointer;" onclick="moveProposalItemRow(this,1)">▼</button>
       <button type="button" class="modal-cancel" style="background:#e63946; color:white; border:none; padding:0.35rem 0.65rem; border-radius:6px; cursor:pointer;" onclick="removeProposalItemRow(this)">Sil</button>
     </div>
   `;
   container.appendChild(div);
   calculateProposalGrandTotal();
 }
+
+function moveProposalItemRow(btn, dir) {
+  const row = btn.closest('.proposal-item-row');
+  if (!row) return;
+  const target = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!target) return;
+  if (dir < 0) row.parentNode.insertBefore(row, target);
+  else row.parentNode.insertBefore(target, row);
+}
+window.moveProposalItemRow = moveProposalItemRow;
 
 function removeProposalItemRow(btn) {
   const row = btn.closest('.proposal-item-row');

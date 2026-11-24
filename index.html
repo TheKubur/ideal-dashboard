@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="https://i.imgur.com/tBt0YHd.png">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=16.5">
+  <link rel="stylesheet" href="style.css?v=17.5">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script type="text/javascript"
     src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
@@ -269,7 +269,7 @@
           <div class="kpi-sub">Bu ay toplam: <span id="totalCRMCount">0</span></div>
           <span class="kpi-pill pill-green">📋 CRM aktivitesi</span>
         </div>
-        <div class="kpi-card" style="--kpi-color:#f4a261; cursor:pointer;" onclick="document.getElementById('okrSection').scrollIntoView({behavior:'smooth'})">
+        <div class="kpi-card" style="--kpi-color:#f4a261; display:none;">
           <div class="kpi-label">OKR Durum Özeti</div>
           <div class="kpi-val" id="conversionRate">0/0</div>
           <div class="kpi-sub">Tüm ekip toplamı</div>
@@ -277,7 +277,7 @@
       </div>
 
       <div class="section-head">
-        <div class="section-title">Ekip Performansı & OKR Analiz Merkezi</div>
+        <div class="section-title">Ekip Performansı</div>
         <div class="section-line"></div>
       </div>
 
@@ -294,11 +294,11 @@
         <div id="weeklySummaryBox" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1.25rem;margin-bottom:1.5rem"></div>
         <div class="team-grid" id="teamGrid" style="cursor:pointer;"></div>
         
-        <div class="section-head" style="margin-top:2rem;">
+        <div class="section-head" style="margin-top:2rem; display:none;">
           <div class="section-title">OKR İlerlemeleri</div>
           <div class="section-line"></div>
         </div>
-        <div id="okrSection" class="team-grid" style="margin-bottom:2rem;"></div>
+        <div id="okrSection" class="team-grid" style="margin-bottom:2rem; display:none;"></div>
       </div>
 
       <!-- DEPARTMAN & KARŞILAŞTIRMA MATRİSİ -->
@@ -724,7 +724,7 @@
 
         <!-- SAĞ SÜTUN: OKR ANALİZİ -->
         <div style="background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:1.25rem; height:100%; display:flex; flex-direction:column;">
-          <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.05em; color:var(--ink); margin-bottom:1rem;">🎯 OKR İlerlemesi & Detayları</h3>
+          <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.05em; color:var(--ink); margin-bottom:1rem;">📋 Aktivite Sayıları</h3>
           <div id="mDetailOkrList" style="display:flex; flex-direction:column; gap:0.75rem; flex:1;">
             <!-- JS ile OKR detayları çizilecek -->
           </div>
@@ -1308,7 +1308,7 @@
   
   <!-- UI COMPONENTS -->
   <script src="js/ui/dashboard_helpers.js?v=4.0"></script>
-  <script src="js/ui/dashboard.js?v=16.4"></script>
+  <script src="js/ui/dashboard.js?v=17.5"></script>
   <script src="js/ui/activity_modal.js?v=4.0"></script>
   <script src="js/ui/kanban.js?v=4.0"></script>
   <script src="js/ui/kanban_drag.js?v=4.0"></script>

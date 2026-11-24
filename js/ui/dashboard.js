@@ -170,32 +170,17 @@ function renderTeam() {
       const val = liveData[m.id][f.key];
       const p = f.hasTarget ? pct(val.actual, val.target) : null;
       const color = f.hasTarget ? pctColor(p ?? 0) : 'var(--ink3)';
-      fieldsHtml += `<div style="display:flex; flex-direction:column; gap:0.25rem; background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:600; color:var(--ink2)">${f.emoji} ${f.label}</span>
-          <span style="font-size:0.75rem; font-weight:700; color:${color}" id="cnt_${m.id}_${f.key}">${val.actual}</span>
-        </div>
-        ${f.hasTarget ? `
-          <div style="height:5px; background:var(--border); border-radius:99px; overflow:hidden; margin-top:0.15rem;">
-            <div id="bar_field_${m.id}_${f.key}" style="height:100%; width:${p}%; background:${color}; border-radius:99px; transition:width 0.5s;"></div>
-          </div>
-        ` : ''}
+      fieldsHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:10px;">
+        <span style="font-size:0.78rem; font-weight:600; color:var(--ink2)">${f.emoji} ${f.label}</span>
+        <span style="font-size:0.85rem; font-weight:800; color:var(--ink)" id="cnt_${m.id}_${f.key}">${val.actual}</span>
       </div>`;
     });
 
     const overall = calcOverall(m.id);
     const lastActInfo = getMemberLastActivityInfo(m.id);
 
-    // Yönetici için Verimlilik Rozeti
+    // Verimlilik/OKR rozeti kaldırıldı
     let effBadgeHtml = '';
-    if (isAdmin) {
-      const effColor = overall >= 80 ? '#2a9d8f' : (overall >= 50 ? '#f4a261' : '#e63946');
-      const effLabel = overall >= 80 ? 'Yüksek' : (overall >= 50 ? 'Normal' : 'Düşük / Riskli');
-      effBadgeHtml = `<span style="font-size:0.68rem; font-weight:700; background:${effColor}18; color:${effColor}; border:1px solid ${effColor}40; padding:0.25rem 0.6rem; border-radius:99px; display:inline-flex; align-items:center; gap:0.3rem;">
-        <span style="width:6px;height:6px;border-radius:50%;background:${effColor};display:inline-block;"></span>
-        Verimlilik: %${overall} (${effLabel})
-      </span>`;
-    }
 
     const avatarHtml = m.photo
       ? `<img src="${m.photo}" alt="${m.name}" style="width:52px;height:52px;border-radius:14px;object-fit:cover;border:2px solid ${m.deptColor}33;box-shadow:0 2px 10px rgba(0,0,0,0.12);">`
@@ -221,7 +206,7 @@ function renderTeam() {
 
       <div class="member-card-right">
         <div class="member-fields-grid">${fieldsHtml}</div>
-        <div class="member-bar"><div class="bar-track"><div class="bar-fill" id="bar_${m.id}" style="width:${overall}%;background:${pctColor(overall)}"></div></div></div>
+
         <div style="display:flex;gap:0.5rem;margin-top:0.25rem">
           ${canAdd ? `<button class="add-activity-btn" style="flex:1" onclick="openModal('${m.id}')">+ Aktivite Ekle</button>` : '<div style="flex:1;text-align:center;font-size:0.72rem;color:var(--ink3)">🔒 Sadece görüntüleme</div>'}
         </div>
@@ -620,53 +605,14 @@ function openMemberDetailModal(memberId) {
 
   const okrListContainer = document.getElementById('mDetailOkrList');
   if (okrListContainer) {
-    const okrData = allOKR[memberId];
-    const objectives = okrData ? okrData.objectives : getOKRDefaults(memberId);
-    
-    okrListContainer.innerHTML = objectives.map((obj, idx) => {
-      let autoActual = 0;
-      let displayTarget = obj.target;
-
-      if (m.dept === 'Satış') {
-        if (obj.key === 'firsat_hedef') {
-          autoActual = acts.filter(a => a.fieldKey === 'firsat').length;
-        } else if (obj.key === 'teklif_hedef') {
-          autoActual = acts.filter(a => a.fieldKey === 'teklif' && a.isOkr === true).length;
-        } else if (obj.key === 'kazanma_hedef') {
-          const sumTeklif = acts.filter(a => a.fieldKey === 'teklif' && a.isOkr === true).reduce((s, a) => s + (a.value || 0), 0);
-          const sumKazanildi = acts.filter(a => a.fieldKey === 'kazanildi').reduce((s, a) => s + (a.value || 0), 0);
-          autoActual = sumTeklif > 0 ? Math.round((sumKazanildi / sumTeklif) * 100) : 0;
-          displayTarget = obj.target + '%';
-        } else if (obj.key === 'kayip_analiz') {
-          const kayiplar = acts.filter(a => a.fieldKey === 'kaybedildi');
-          autoActual = kayiplar.length > 0 ? Math.round((kayiplar.filter(a => a.desc && a.desc.trim().length > 0).length / kayiplar.length) * 100) : 0;
-          displayTarget = obj.target + '%';
-        }
-      } else {
-        const keyMap = { icerik_hedef: 'diger', sosyal_hedef: 'twitter', haber_hedef: 'haber', linkedin_hedef: 'linkedin' };
-        const fk = keyMap[obj.key];
-        autoActual = fk ? acts.filter(a => a.fieldKey === fk).length : (obj.actual || 0);
-      }
-
-      let p = obj.target > 0 ? Math.min(100, Math.round((autoActual / obj.target) * 100)) : 0;
-      const isPctDisplay = obj.key === 'kazanma_hedef' || obj.key === 'kayip_analiz';
-      const color = pctColor(p);
-      
+    // Aktivite türüne göre kayıt sayıları (OKR hedefi yok, sadece girilen aktiviteler)
+    okrListContainer.innerHTML = m.fields.map(f => {
+      const count = acts.filter(a => a.fieldKey === f.key).length;
       return `
-        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0.85rem; display:flex; flex-direction:column; gap:0.4rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="font-size:0.8rem; color:var(--ink);">${obj.label}</strong>
-            <span style="font-size:0.8rem; font-weight:800; color:${color};">${isPctDisplay ? autoActual + '%' : autoActual} <span style="font-size:0.72rem; color:var(--ink3); font-weight:400;">/ ${displayTarget}</span></span>
-          </div>
-          <div style="height:6px; background:var(--border); border-radius:99px; overflow:hidden;">
-            <div style="width:${p}%; height:100%; background:${color}; border-radius:99px;"></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--ink3);">
-            <span>Tamamlanma Oranı: %${p}</span>
-            <span>Hedef Başarı</span>
-          </div>
-        </div>
-      `;
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0.7rem 0.9rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.82rem; font-weight:600; color:var(--ink);">${f.emoji} ${f.label}</span>
+          <strong style="font-size:0.95rem; color:var(--ink);">${count}</strong>
+        </div>`;
     }).join('');
   }
 

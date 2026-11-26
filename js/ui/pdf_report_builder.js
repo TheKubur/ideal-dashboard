@@ -71,6 +71,47 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const cancelTotal = monthCancels.reduce((a, c) => a + (Number(c.amount) || 0), 0);
   const fmtTL = n => (Number(n) || 0).toLocaleString('tr-TR') + ' ₺';
 
+  // Tüm teklifler: sayfalı liste (sayfa başına 20)
+  const PROP_PER_PAGE = 20;
+  const propChunks = [];
+  for (let i = 0; i < currentMonthProposals.length; i += PROP_PER_PAGE) propChunks.push(currentMonthProposals.slice(i, i + PROP_PER_PAGE));
+  if (!propChunks.length) propChunks.push([]);
+  const totalPages = 4 + propChunks.length;
+  const propStColor = { 'Gönderildi': '#3b82f6', 'Kabul Edildi': '#10b981', 'Reddedildi': '#ef4444', 'Beklemede': '#f59e0b' };
+  const propPagesHtml = propChunks.map((chunk, ci) => `
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:32px;" />` : '<strong style="color:#0d1f61; font-size:18px;">IDEAL DATA</strong>'}
+            <span style="color:#cbd5e1;">|</span>
+            <span style="font-size:13px; font-weight:700; color:#475569;">Hazırlanan & Gönderilen Teklifler</span>
+          </div>
+          <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
+        </div>
+        <div style="font-size:15px; font-weight:800; color:#6b21a8; margin-bottom:10px; border-bottom:1px solid #f3e8ff; padding-bottom:4px;">
+          ${activeMonthName} — Toplam ${currentMonthProposals.length} Teklif · ${proposalsTotal.toLocaleString('tr-TR')} ₺ ${propChunks.length > 1 ? `(${ci + 1}/${propChunks.length})` : ''}
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:10px;">
+          <thead><tr style="background:#6b21a8; color:#ffffff;">
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">Teklif No</th>
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">Kurum Adı</th>
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">İlgili Kişi</th>
+            <th style="padding:6px 8px; text-align:center; font-size:9px; text-transform:uppercase;">Tarih</th>
+            <th style="padding:6px 8px; text-align:center; font-size:9px; text-transform:uppercase;">Durum</th>
+            <th style="padding:6px 8px; text-align:right; font-size:9px; text-transform:uppercase;">Tutar (TL)</th>
+          </tr></thead>
+          <tbody>
+            ${chunk.length ? chunk.map((pr, idx) => { const st = pr.status || 'Gönderildi'; return `<tr style="border-bottom:1px solid #f3e8ff; background:${idx%2===0?'#ffffff':'#faf5ff'};"><td style="padding:6px 8px; font-weight:700; color:#6b21a8;">${pr.proposalNo || pr.id || '—'}</td><td style="padding:6px 8px; font-weight:600;">${pr.company || '—'}</td><td style="padding:6px 8px;">${pr.contactPerson || '—'}</td><td style="padding:6px 8px; text-align:center;">${pr.date || '—'}</td><td style="padding:6px 8px; text-align:center; font-weight:700; color:${propStColor[st] || '#64748b'};">${st}</td><td style="padding:6px 8px; text-align:right; font-weight:700; color:#7c3aed;">${(parseFloat(pr.grandTotal || pr.totalAmount || pr.total) || 0).toLocaleString('tr-TR')} ₺</td></tr>`; }).join('') : `<tr><td colspan="6" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı teklif bulunmuyor.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
+        <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
+        <span>Sayfa ${3 + ci} / ${totalPages}</span>
+      </div>
+    </div>`).join('');
+
   // Create wrapper & target container
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'position:absolute; left:-9999px; top:0; background:#ffffff';
@@ -121,7 +162,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#94a3b8; font-weight:500;">
         <span>Gizli ve Özel · Ideal Data Finansal Teknolojiler A.Ş.</span>
-        <span>Sayfa 1 / 4</span>
+        <span>Sayfa 1 / ${totalPages}</span>
       </div>
     </div>
 
@@ -196,11 +237,13 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Kurumsal Raporlama Sistemi</span>
-        <span>Sayfa 2 / 4</span>
+        <span>Sayfa 2 / ${totalPages}</span>
       </div>
     </div>
 
-    <!-- SAYFA 3: PROJE, TEKLİF & FİNANSAL TABLOLAR -->
+    ${propPagesHtml}
+
+    <!-- SAYFA: PROJE & FİNANSAL TABLOLAR -->
     <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
@@ -212,31 +255,6 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
           <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
         </div>
 
-        <div style="font-size:15px; font-weight:800; color:#6b21a8; margin-bottom:10px; border-bottom:1px solid #f3e8ff; padding-bottom:4px;">
-          📄 Hazırlanan & Gönderilen Teklifler — ${activeMonthName} (${currentMonthProposals.length} Kayıt)
-        </div>
-        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10px;">
-          <thead>
-            <tr style="background:#6b21a8; color:#ffffff;">
-              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Teklif No</th>
-              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">Kurum Adı</th>
-              <th style="padding:6px 8px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase;">İlgili Kişi</th>
-              <th style="padding:6px 8px; text-align:center; font-weight:700; font-size:9px; text-transform:uppercase;">Tarih</th>
-              <th style="padding:6px 8px; text-align:right; font-weight:700; font-size:9px; text-transform:uppercase;">Tutar (TL)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${currentMonthProposals.length ? currentMonthProposals.slice(0, 6).map((pr, idx) => `
-              <tr style="border-bottom:1px solid #f3e8ff; background:${idx%2===0?'#ffffff':'#faf5ff'};">
-                <td style="padding:6px 8px; font-weight:700; color:#6b21a8;">${pr.proposalNo || pr.id || '—'}</td>
-                <td style="padding:6px 8px; font-weight:600;">${pr.company || '—'}</td>
-                <td style="padding:6px 8px;">${pr.contactPerson || '—'}</td>
-                <td style="padding:6px 8px; text-align:center;">${pr.date || '—'}</td>
-                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#7c3aed;">${(parseFloat(pr.grandTotal || pr.totalAmount || pr.total) || 0).toLocaleString('tr-TR')} ₺</td>
-              </tr>
-            `).join('') : `<tr><td colspan="5" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde kayıtlı teklif bulunmuyor.</td></tr>`}
-          </tbody>
-        </table>
 
         <div style="font-size:15px; font-weight:800; color:#0d1f61; margin:16px 0 10px 0; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
           💼 Yeni Eklenen Projeler — ${activeMonthName} (${newProjects.length} Kayıt)
@@ -304,7 +322,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
-        <span>Sayfa 3 / 4</span>
+        <span>Sayfa ${3 + propChunks.length} / ${totalPages}</span>
       </div>
     </div>
 
@@ -342,7 +360,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
-        <span>Sayfa 4 / 4</span>
+        <span>Sayfa ${totalPages} / ${totalPages}</span>
       </div>
     </div>
   `;

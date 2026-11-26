@@ -1,12 +1,20 @@
 /* ── EXECUTIVE PRESENTATION PDF REPORT BUILDER ── */
 
-function generateExecutivePresentationPDF(reportType = 'executive') {
+async function generateExecutivePresentationPDF(reportType = 'executive') {
   if (typeof html2pdf === 'undefined') {
     if (typeof showToast === 'function') showToast('PDF kütüphanesi yüklenmedi!', 'error');
     return;
   }
 
   if (typeof showToast === 'function') showToast('Kurumsal Sunum Raporu oluşturuluyor... ⏳', 'info');
+
+  // İptal verisi yalnızca İptaller sekmesi açılınca yüklendiği için burada garantiye al
+  try {
+    if (typeof db !== 'undefined' && typeof allCancellations !== 'undefined' && !allCancellations.length) {
+      const cs = await db.collection('cancellations').get();
+      allCancellations = cs.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+  } catch (e) { console.error('Iptal verisi yuklenemedi:', e); }
 
   const period = typeof currentPeriod !== 'undefined' ? currentPeriod : 'AĞUSTOS 2026';
   const logoDataUrl = (typeof IDEAL_DATA_LOGO_B64 !== 'undefined') ? IDEAL_DATA_LOGO_B64 : null;
@@ -67,7 +75,8 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const decided = stStats[1].n + stStats[2].n;
   const winRate = decided > 0 ? Math.round((stStats[1].n / decided) * 100) : null;
   const cancelsAll = (typeof allCancellations !== 'undefined') ? allCancellations : [];
-  const monthCancels = cancelsAll.filter(c => normalizeMonth(c.month) === activeMonthNorm);
+  const periodYear = (period || '').split(' ')[1];
+  const monthCancels = cancelsAll.filter(c => normalizeMonth(c.month) === activeMonthNorm && (!periodYear || !c.year || String(c.year) === periodYear));
   const cancelTotal = monthCancels.reduce((a, c) => a + (Number(c.amount) || 0), 0);
   const fmtTL = n => (Number(n) || 0).toLocaleString('tr-TR') + ' ₺';
 

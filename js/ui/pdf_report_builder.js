@@ -57,6 +57,20 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
   const totalCRMCount = activitiesList.length;
   const teamMembers = (typeof TEAM_DEF !== 'undefined') ? TEAM_DEF : [];
 
+  // Teklif durum özeti & iptaller (sayfa 4)
+  const stDefs = [['Gönderildi','#3b82f6'],['Kabul Edildi','#10b981'],['Reddedildi','#ef4444'],['Beklemede','#f59e0b']];
+  const propAmt = p => parseFloat(p.grandTotal || p.totalAmount || p.total) || 0;
+  const stStats = stDefs.map(([s, col]) => {
+    const l = currentMonthProposals.filter(p => (p.status || 'Gönderildi') === s);
+    return { s, col, n: l.length, amt: l.reduce((a, p) => a + propAmt(p), 0) };
+  });
+  const decided = stStats[1].n + stStats[2].n;
+  const winRate = decided > 0 ? Math.round((stStats[1].n / decided) * 100) : null;
+  const cancelsAll = (typeof allCancellations !== 'undefined') ? allCancellations : [];
+  const monthCancels = cancelsAll.filter(c => normalizeMonth(c.month) === activeMonthNorm);
+  const cancelTotal = monthCancels.reduce((a, c) => a + (Number(c.amount) || 0), 0);
+  const fmtTL = n => (Number(n) || 0).toLocaleString('tr-TR') + ' ₺';
+
   // Create wrapper & target container
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'position:absolute; left:-9999px; top:0; background:#ffffff';
@@ -107,7 +121,7 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#94a3b8; font-weight:500;">
         <span>Gizli ve Özel · Ideal Data Finansal Teknolojiler A.Ş.</span>
-        <span>Sayfa 1 / 3</span>
+        <span>Sayfa 1 / 4</span>
       </div>
     </div>
 
@@ -182,12 +196,12 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Kurumsal Raporlama Sistemi</span>
-        <span>Sayfa 2 / 3</span>
+        <span>Sayfa 2 / 4</span>
       </div>
     </div>
 
     <!-- SAYFA 3: PROJE, TEKLİF & FİNANSAL TABLOLAR -->
-    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; page-break-after:always; display:flex; flex-direction:column; justify-content:space-between;">
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
           <div style="display:flex; align-items:center; gap:12px;">
@@ -290,7 +304,45 @@ function generateExecutivePresentationPDF(reportType = 'executive') {
 
       <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
         <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
-        <span>Sayfa 3 / 3</span>
+        <span>Sayfa 3 / 4</span>
+      </div>
+    </div>
+
+    <!-- SAYFA 4: TEKLİF DURUMLARI & İPTALLER -->
+    <div style="width:750px; min-height:1050px; height:1050px; padding:40px; box-sizing:border-box; position:relative; background:#ffffff; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d1f61; padding-bottom:12px; margin-bottom:25px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            ${logoDataUrl ? `<img src="${logoDataUrl}" style="height:32px;" />` : '<strong style="color:#0d1f61; font-size:18px;">IDEAL DATA</strong>'}
+            <span style="color:#cbd5e1;">|</span>
+            <span style="font-size:13px; font-weight:700; color:#475569;">Teklif Sonuçları & İptal Analizi</span>
+          </div>
+          <div style="font-size:11px; font-weight:700; color:#0d1f61;">${period}</div>
+        </div>
+
+        <div style="font-size:15px; font-weight:800; color:#0d1f61; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">Teklif Durum Özeti — ${activeMonthName}</div>
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+          ${stStats.map(x => `<div style="flex:1; border-top:4px solid ${x.col}; background:#f8fafc; border-radius:8px; padding:12px; box-sizing:border-box;"><div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#64748b;">${x.s}</div><div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;">${x.n}</div><div style="font-size:10px; font-weight:600; color:${x.col}; margin-top:2px;">${fmtTL(x.amt)}</div></div>`).join('')}
+        </div>
+        <div style="font-size:11px; color:#475569; margin-bottom:22px;">Kazanma oranı (karara bağlanan tekliflerde): <strong style="color:#0d1f61;">${winRate === null ? '—' : '%' + winRate}</strong></div>
+
+        <div style="font-size:15px; font-weight:800; color:#e63946; margin-bottom:12px; border-bottom:1px solid #fee2e2; padding-bottom:4px;">Mevcut İptaller — ${activeMonthName} (${monthCancels.length} Kayıt · ${fmtTL(cancelTotal)})</div>
+        <table style="width:100%; border-collapse:collapse; font-size:10px;">
+          <thead><tr style="background:#e63946; color:#ffffff;">
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">Kurum</th>
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">Ürün</th>
+            <th style="padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase;">Neden</th>
+            <th style="padding:6px 8px; text-align:right; font-size:9px; text-transform:uppercase;">Tutar</th>
+          </tr></thead>
+          <tbody>
+            ${monthCancels.length ? monthCancels.slice(0, 14).map((c, i) => `<tr style="border-bottom:1px solid #fee2e2; background:${i%2===0?'#ffffff':'#fef2f2'};"><td style="padding:6px 8px; font-weight:600;">${c.company || '—'}</td><td style="padding:6px 8px;">${c.product || '—'}</td><td style="padding:6px 8px;">${c.reason || 'Diğer'}</td><td style="padding:6px 8px; text-align:right; font-weight:700; color:#e63946;">${fmtTL(c.amount)}</td></tr>`).join('') : `<tr><td colspan="4" style="padding:10px; text-align:center; color:#94a3b8;">${activeMonthName} döneminde iptal kaydı bulunmuyor.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="border-top:1px solid #cbd5e1; padding-top:12px; margin-top:auto; display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#64748b; font-weight:500;">
+        <span>Ideal Data CRM · Otomatik Oluşturulan Yönetici Raporu</span>
+        <span>Sayfa 4 / 4</span>
       </div>
     </div>
   `;
